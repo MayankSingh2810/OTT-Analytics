@@ -1,0 +1,23 @@
+# Generated data
+data/
+data_lake/
+streaming/events/
+
+# Spark checkpoints
+**/checkpoints/
+**/_spark_metadata/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+
+# Logs
+logs/
+*.log
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/

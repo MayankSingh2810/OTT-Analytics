@@ -1,0 +1,1 @@
+from generator import content_generator

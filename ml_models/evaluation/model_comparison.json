@@ -1,0 +1,18 @@
+{
+    "Random Forest": {
+        "Algorithm": "Spark MLlib Random Forest",
+        "AUC": 0.9996306226069877,
+        "Training Rows": 79895,
+        "Testing Rows": 20098
+    },
+    "Gradient Boosted Trees": {
+        "Algorithm": "Spark MLlib Gradient Boosted Trees",
+        "AUC": 0.9996386277512302,
+        "Training Rows": 79895,
+        "Testing Rows": 20098
+    },
+    "Winner": {
+        "Best Model": "Gradient Boosted Trees",
+        "Best AUC": 0.9996386277512302
+    }
+}
