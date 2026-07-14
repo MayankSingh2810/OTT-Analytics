@@ -15,46 +15,54 @@ def show():
     genre = load_table("genre")
 
     if content.empty or top.empty or genre.empty:
-        st.error("Gold Layer tables not found.")
+        st.error("Content tables not found in MySQL.")
         return
 
-    # ==========================================================
-    # KPI SECTION
-    # ==========================================================
+    # --------------------------
+    # Fix numeric columns
+    # --------------------------
+
+    numeric_cols = [
+        "views",
+        "avg_rating",
+        "avg_watch_minutes",
+        "avg_completion",
+        "watch_hours",
+        "unique_viewers",
+        "imdb_rating",
+    ]
+
+    for df in [content, top, genre]:
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = df[col].astype(float)
 
     st.subheader("Content Overview")
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        metric_card(
-            "Titles",
-            f"{len(content):,}"
-        )
+        metric_card("Titles", f"{len(content):,}")
 
     with c2:
-        metric_card(
-            "Genres",
-            f"{genre.genre.nunique()}"
-        )
+        if "genre" in genre.columns:
+            metric_card("Genres", f"{genre['genre'].nunique()}")
+        else:
+            metric_card("Genres", "N/A")
 
     with c3:
-        metric_card(
-            "Total Views",
-            f"{int(content.views.sum()):,}"
-        )
+        if "views" in content.columns:
+            metric_card("Total Views", f"{int(content['views'].sum()):,}")
+        else:
+            metric_card("Total Views", "N/A")
 
     with c4:
-        metric_card(
-            "Average Rating",
-            f"{content.avg_rating.mean():.2f}"
-        )
+        if "avg_rating" in content.columns:
+            metric_card("Average Rating", f"{content['avg_rating'].mean():.2f}")
+        else:
+            metric_card("Average Rating", "N/A")
 
     st.divider()
-
-    # ==========================================================
-    # GENRE ANALYTICS
-    # ==========================================================
 
     left, right = st.columns(2)
 
@@ -62,61 +70,52 @@ def show():
 
         st.subheader("🎭 Views by Genre")
 
-        fig = px.bar(
+        if {"genre", "views"}.issubset(genre.columns):
 
-            genre,
+            fig = px.bar(
+                genre,
+                x="genre",
+                y="views",
+                color="views",
+                template="plotly_dark"
+            )
 
-            x="genre",
-
-            y="total_views",
-
-            color="total_views",
-
-            template="plotly_dark"
-
-        )
-
-        fig.update_layout(
-
-            height=420,
-
-            paper_bgcolor="#0d1117",
-
-            plot_bgcolor="#0d1117",
-
-            coloraxis_showscale=False
-
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
+            st.plotly_chart(fig, use_container_width=True)
 
     with right:
 
-        st.subheader("⏱ Watch Hours by Genre")
+        st.subheader("⭐ Average Rating by Genre")
 
-        fig = px.pie(
+        if {"genre", "avg_rating"}.issubset(genre.columns):
 
-            genre,
+            fig = px.pie(
+                genre,
+                names="genre",
+                values="avg_rating",
+                hole=.5,
+                template="plotly_dark"
+            )
 
-            names="genre",
+            st.plotly_chart(fig, use_container_width=True)
 
-            values="total_watch_hours",
+    st.divider()
 
-            hole=.55,
+    st.subheader("🔥 Top Content")
 
+    if "views" in top.columns:
+
+        top20 = top.sort_values(
+            "views",
+            ascending=False
+        ).head(20)
+
+        fig = px.bar(
+            top20,
+            x="views",
+            y="title",
+            orientation="h",
+            color="views",
             template="plotly_dark"
-
-        )
-
-        fig.update_layout(
-
-            height=420,
-
-            paper_bgcolor="#0d1117"
-
         )
 
         st.plotly_chart(
@@ -125,159 +124,69 @@ def show():
         )
 
     st.divider()
-
-    # ==========================================================
-    # TOP CONTENT
-    # ==========================================================
-
-    st.subheader("🔥 Top 20 Performing Content")
-
-    top20 = top.sort_values(
-
-        "views",
-
-        ascending=False
-
-    ).head(20)
-
-    fig = px.bar(
-
-        top20,
-
-        x="views",
-
-        y="title",
-
-        orientation="h",
-
-        color="imdb_rating",
-
-        template="plotly_dark"
-
-    )
-
-    fig.update_layout(
-
-        height=650,
-
-        paper_bgcolor="#0d1117",
-
-        plot_bgcolor="#0d1117",
-
-        yaxis=dict(categoryorder="total ascending")
-
-    )
-
-    st.plotly_chart(
-
-        fig,
-
-        use_container_width=True
-
-    )
-
-    st.divider()
-
-    # ==========================================================
-    # RATINGS
-    # ==========================================================
 
     left, right = st.columns(2)
 
     with left:
 
-        st.subheader("⭐ IMDb Rating Distribution")
+        if "avg_rating" in content.columns:
 
-        fig = px.histogram(
+            st.subheader("IMDb Rating Distribution")
 
-            content,
+            fig = px.histogram(
+                content,
+                x="avg_rating",
+                nbins=20,
+                template="plotly_dark"
+            )
 
-            x="avg_rating",
-
-            nbins=20,
-
-            template="plotly_dark"
-
-        )
-
-        fig.update_layout(
-
-            paper_bgcolor="#0d1117",
-
-            plot_bgcolor="#0d1117",
-
-            height=400
-
-        )
-
-        st.plotly_chart(
-
-            fig,
-
-            use_container_width=True
-
-        )
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
     with right:
 
-        st.subheader("📈 Average Watch Time")
+        if {"avg_watch_minutes", "avg_completion"}.issubset(content.columns):
 
-        fig = px.scatter(
+            st.subheader("Watch Time vs Completion")
 
-            content,
+            color = "genre" if "genre" in content.columns else None
 
-            x="avg_watch_minutes",
+            fig = px.scatter(
+                content,
+                x="avg_watch_minutes",
+                y="avg_completion",
+                color=color,
+                template="plotly_dark"
+            )
 
-            y="avg_completion",
-
-            color="genre",
-
-            template="plotly_dark"
-
-        )
-
-        fig.update_layout(
-
-            paper_bgcolor="#0d1117",
-
-            plot_bgcolor="#0d1117",
-
-            height=400
-
-        )
-
-        st.plotly_chart(
-
-            fig,
-
-            use_container_width=True
-
-        )
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
     st.divider()
 
-    # ==========================================================
-    # ENTERPRISE TABLE
-    # ==========================================================
+    st.subheader("Top Content Dataset")
 
-    st.subheader("📋 Top Content Dataset")
-
-    st.dataframe(
-
-        top[[
+    available = [
+        c for c in [
             "title",
             "genre",
             "content_type",
             "views",
             "unique_viewers",
             "watch_hours",
-            "imdb_rating"
-        ]],
+            "imdb_rating",
+        ]
+        if c in top.columns
+    ]
 
+    st.dataframe(
+        top[available],
         use_container_width=True,
-
         height=450
-
     )
 
-    st.success("Content Analytics Loaded Successfully")
+    st.success("✅ Content Analytics Loaded Successfully")
