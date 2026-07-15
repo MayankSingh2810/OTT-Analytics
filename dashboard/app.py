@@ -11,27 +11,33 @@ from views.revenue import show as revenue
 from views.ml import show as ml
 from views.realtime import show as realtime
 
+
 st.set_page_config(
-
     page_title=APP_TITLE,
-
     page_icon="🎬",
-
     layout="wide",
-
     initial_sidebar_state="expanded"
-
 )
+
 
 page = sidebar()
 
+
 PAGES = {
+
     "🏠 Executive Dashboard": executive,
+
     "📺 Content Analytics": content,
+
     "👥 User Analytics": users,
+
     "💰 Revenue Analytics": revenue,
+
     "🤖 ML Predictions": ml,
+
     "⚡ Real-Time Monitoring": realtime,
+
 }
+
 
 PAGES[page]()

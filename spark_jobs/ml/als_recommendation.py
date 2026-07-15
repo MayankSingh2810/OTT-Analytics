@@ -1,12 +1,10 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import dense_rank
-from pyspark.sql.window import Window
-
+from pyspark.sql.functions import rand
 from pyspark.ml.feature import StringIndexer
 from pyspark.ml.recommendation import ALS
 
 # ==========================================================
-# Spark
+# Spark Session
 # ==========================================================
 
 spark = (
@@ -19,7 +17,7 @@ spark = (
 # Load Gold Layer
 # ==========================================================
 
-df = spark.read.parquet(
+content = spark.read.parquet(
     "data_lake/gold/top_content"
 )
 
@@ -28,22 +26,27 @@ users = spark.read.parquet(
 )
 
 # ==========================================================
-# Create Synthetic User-Content Interactions
+# Synthetic User–Movie Interactions
 # ==========================================================
 
 interactions = (
     users.select("user_id")
     .crossJoin(
-        df.select(
+        content.select(
             "content_id",
+            "title",
+            "genre",
             "imdb_rating"
         )
     )
 )
 
-# Keep dataset manageable
+# keep dataset manageable
 
-interactions = interactions.sample(0.02, seed=42)
+interactions = (
+    interactions
+    .sample(0.02, seed=42)
+)
 
 # ==========================================================
 # Encode IDs
@@ -68,31 +71,22 @@ interactions = item_indexer.fit(interactions).transform(interactions)
 
 interactions = interactions.withColumn(
     "rating",
-    interactions.imdb_rating
+    interactions.imdb_rating + rand(seed=42)
 )
 
 # ==========================================================
-# ALS
+# Train ALS
 # ==========================================================
 
 als = ALS(
-
     userCol="userIndex",
-
     itemCol="itemIndex",
-
     ratingCol="rating",
-
-    coldStartStrategy="drop",
-
-    nonnegative=True,
-
     rank=20,
-
     maxIter=10,
-
-    regParam=0.1
-
+    regParam=0.1,
+    coldStartStrategy="drop",
+    nonnegative=True
 )
 
 model = als.fit(interactions)
@@ -103,6 +97,55 @@ model = als.fit(interactions)
 
 recommendations = model.recommendForAllUsers(10)
 
+# ==========================================================
+# Item Mapping
+# ==========================================================
+
+item_mapping = (
+    interactions
+    .select(
+        "itemIndex",
+        "content_id",
+        "title",
+        "genre"
+    )
+    .dropDuplicates(["itemIndex"])
+)
+
+# ==========================================================
+# Explode Recommendations
+# ==========================================================
+
+from pyspark.sql.functions import explode
+
+recommendations = recommendations.withColumn(
+    "recommendation",
+    explode("recommendations")
+)
+
+recommendations = recommendations.select(
+    "userIndex",
+    recommendations.recommendation.itemIndex.alias("itemIndex"),
+    recommendations.recommendation.rating.alias("PredictedRating")
+)
+
+# ==========================================================
+# Join Movie Information
+# ==========================================================
+
+recommendations = (
+    recommendations
+    .join(
+        item_mapping,
+        on="itemIndex",
+        how="left"
+    )
+)
+
+# ==========================================================
+# Save Recommendations
+# ==========================================================
+
 recommendations.write.mode("overwrite").parquet(
     "ml_models/als/recommendations"
 )
@@ -111,8 +154,8 @@ model.write().overwrite().save(
     "ml_models/als/model"
 )
 
-print("=" * 60)
-print("ALS Recommendation Engine Completed")
-print("=" * 60)
+print("=" * 70)
+print("ALS Recommendation Engine Completed Successfully")
+print("=" * 70)
 
 spark.stop()

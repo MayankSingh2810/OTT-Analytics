@@ -5,24 +5,6 @@ Dashboard Configuration
 ==========================================================
 """
 
-from pathlib import Path
-
-# ==========================================================
-# PROJECT
-# ==========================================================
-
-DASHBOARD_DIR = Path(__file__).resolve().parent
-
-PROJECT_ROOT = DASHBOARD_DIR.parent
-
-# ==========================================================
-# DATA LAKE
-# ==========================================================
-
-DATA_LAKE = PROJECT_ROOT / "data_lake"
-
-GOLD_DIR = DATA_LAKE / "gold"
-
 # ==========================================================
 # STREAMLIT
 # ==========================================================
@@ -32,37 +14,53 @@ APP_TITLE = "OTT Stream Intelligence"
 REFRESH_SECONDS = 10
 
 # ==========================================================
-# GOLD TABLES
+# MYSQL
+# ==========================================================
+
+MYSQL_HOST = "localhost"
+MYSQL_PORT = 3306
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "1234"
+MYSQL_DATABASE = "ott_analytics"
+
+# ==========================================================
+# MYSQL TABLES
 # ==========================================================
 
 TABLES = {
 
-    "dashboard": GOLD_DIR / "dashboard_summary",
+    "dashboard": "dashboard_summary",
 
-    "daily_users": GOLD_DIR / "daily_active_users",
+    "daily_users": "daily_active_users",
 
-    "monthly_users": GOLD_DIR / "monthly_active_users",
+    "monthly_users": "monthly_active_users",
 
-    "retention": GOLD_DIR / "user_retention",
+    "retention": "user_retention",
 
-    "watch_time": GOLD_DIR / "watch_time_summary",
+    "watch_time": "watch_time_summary",
 
-    "genre": GOLD_DIR / "genre_analytics",
+    "genre": "genre_stats",
 
-    "top_content": GOLD_DIR / "top_content",
+    "top_content": "top_content",
 
-    "content": GOLD_DIR / "content_performance",
+    "content": "content_performance",
 
-    "country": GOLD_DIR / "country_stats",
+    "country": "country_stats",
 
-    "device": GOLD_DIR / "device_stats",
+    "device": "device_stats",
 
-    "hourly": GOLD_DIR / "hourly_usage",
+    "hourly": "hourly_usage",
 
-    "quality": GOLD_DIR / "quality_stats",
+    "quality": "quality_stats",
 
-    "revenue": GOLD_DIR / "subscription_revenue",
+    "revenue": "subscription_revenue",
 
-    "churn": GOLD_DIR / "churn_features"
+    "network": "network_stats",
+
+    "popular": "popular_content",
+
+    "event": "event_stats",
+
+    "churn": "churn_features"
 
 }
