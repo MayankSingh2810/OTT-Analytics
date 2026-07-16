@@ -50,3 +50,13 @@ for folder in [
     ML_MODELS_DIR,
 ]:
     folder.mkdir(parents=True, exist_ok=True)
+
+# ==========================================================
+# MYSQL
+# ==========================================================
+
+DB_HOST = "localhost"
+DB_PORT = 3306
+DB_USER = "root"
+DB_PASSWORD = "1234"
+DB_NAME = "ott_analytics"
