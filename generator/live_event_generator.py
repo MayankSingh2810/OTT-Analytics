@@ -4,16 +4,20 @@ import time
 import uuid
 from pathlib import Path
 from datetime import datetime
+from collections import deque
 
 # =====================================================
-# Output Folder
+# CONFIGURATION
 # =====================================================
 
 OUTPUT_DIR = Path("streaming/events")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+EVENTS_PER_SECOND = 1
+MAX_EVENT_FILES = 500
+
 # =====================================================
-# Master Data
+# MASTER DATA
 # =====================================================
 
 DEVICES = [
@@ -75,8 +79,13 @@ EVENTS = [
     "SKIP"
 ]
 
-# Keep one session per user
+# =====================================================
+# SESSION CACHE
+# =====================================================
+
 SESSIONS = {}
+
+recent_files = deque(maxlen=MAX_EVENT_FILES)
 
 counter = 1
 
@@ -86,59 +95,81 @@ print("=" * 60)
 
 while True:
 
-    user = f"USR-{random.randint(1,50000):06}"
+    for _ in range(EVENTS_PER_SECOND):
 
-    if user not in SESSIONS:
-        SESSIONS[user] = str(uuid.uuid4())
+        user = f"USR-{random.randint(1,50000):06}"
 
-    event = {
+        if user not in SESSIONS:
+            SESSIONS[user] = str(uuid.uuid4())
 
-        "event_id": str(uuid.uuid4()),
+        event_type = random.choices(
+            EVENTS,
+            weights=[40,8,6,8,15,10,5,8],
+            k=1
+        )[0]
 
-        "timestamp": datetime.now().isoformat(),
+        watch_seconds = random.randint(30,7200)
 
-        "user_id": user,
+        completion = min(
+            100,
+            round((watch_seconds/7200)*100 + random.uniform(-5,5),2)
+        )
 
-        "session_id": SESSIONS[user],
+        event = {
 
-        "content_id": f"CNT-{random.randint(1,5000):05}",
+            "event_id": str(uuid.uuid4()),
 
-        "event_type": random.choice(EVENTS),
+            "timestamp": datetime.now().isoformat(),
 
-        "device": random.choice(DEVICES),
+            "user_id": user,
 
-        "subscription_plan": random.choice(PLANS),
+            "session_id": SESSIONS[user],
 
-        "country": random.choice(COUNTRIES),
+            "content_id": f"CNT-{random.randint(1,5000):05}",
 
-        "network": random.choice(NETWORKS),
+            "event_type": event_type,
 
-        "genre": random.choice(GENRES),
+            "device": random.choice(DEVICES),
 
-        "quality": random.choice(QUALITIES),
+            "subscription_plan": random.choice(PLANS),
 
-        "watch_seconds": random.randint(5,7200),
+            "country": random.choice(COUNTRIES),
 
-        "completion_pct": round(random.uniform(0,100),2),
+            "network": random.choice(NETWORKS),
 
-        "buffer_time_ms": random.randint(0,5000),
+            "genre": random.choice(GENRES),
 
-        "rating": random.randint(1,5)
+            "quality": random.choice(QUALITIES),
 
-    }
+            "watch_seconds": watch_seconds,
 
-    filename = OUTPUT_DIR / f"event_{counter:08}.json"
+            "completion_pct": completion,
 
-    with open(filename, "w") as f:
-        json.dump(event, f)
+            "buffer_time_ms": random.randint(0,3000),
 
-    print(
-        f"[{counter:06}] "
-        f"{event['event_type']:<10}"
-        f"{event['user_id']} "
-        f"{event['device']}"
-    )
+            "rating": random.randint(1,5)
 
-    counter += 1
+        }
+
+        filename = OUTPUT_DIR / f"event_{counter:08}.json"
+
+        with open(filename, "w") as f:
+            json.dump(event, f)
+
+        recent_files.append(filename)
+
+        if len(recent_files) == MAX_EVENT_FILES:
+            oldest = recent_files[0]
+            if oldest.exists():
+                oldest.unlink()
+
+        print(
+            f"[{counter:08}] "
+            f"{event_type:<8} "
+            f"{user} "
+            f"{event['device']}"
+        )
+
+        counter += 1
 
     time.sleep(1)
