@@ -2,6 +2,7 @@
 ==========================================================
 Gold Layer
 Enterprise Churn Feature Store
+(Historical + Live)
 ==========================================================
 """
 
@@ -14,7 +15,8 @@ from pyspark.sql.functions import (
     current_date,
     round,
     when,
-    col
+    col,
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -26,8 +28,14 @@ def build_churn_features(spark):
     print("Building Enterprise Churn Features")
     print("=" * 70)
 
+    # Historical
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
+    )
+
+    # Live
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
     )
 
     users = spark.read.parquet(
@@ -38,9 +46,40 @@ def build_churn_features(spark):
         str(SILVER_DIR / "subscriptions")
     )
 
+    # Convert live events into watch_history format
+    live = (
+        live
+        .withColumn("watch_id", col("event_id"))
+        .withColumn("watch_start", col("timestamp"))
+        .withColumn("watch_end", col("timestamp"))
+        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+        .withColumn(
+            "liked",
+            when(col("event_type") == "LIKE", "Yes").otherwise("No")
+        )
+        .withColumn("added_to_watchlist", lit("No"))
+        .withColumn(
+            "completed",
+            when(col("completion_pct") >= 90, "Yes").otherwise("No")
+        )
+        .withColumn("recommendation_source", lit("Live"))
+        .withColumn("engagement_level", lit("Live"))
+        .withColumn(
+            "binge_watch",
+            when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
+        )
+        .select(watch.columns)
+    )
+
+    # Merge historical + live
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     features = (
 
-        watch
+        all_watch
 
         .groupBy("user_id")
 
@@ -86,25 +125,19 @@ def build_churn_features(spark):
         )
 
         .withColumn(
-
             "days_inactive",
-
             datediff(
                 current_date(),
                 col("last_activity")
             )
-
         )
 
         .withColumn(
-
             "churn_label",
-
             when(
                 col("days_inactive") > 30,
                 1
             ).otherwise(0)
-
         )
 
     )

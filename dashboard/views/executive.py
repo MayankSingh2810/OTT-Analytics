@@ -10,7 +10,7 @@ from components.insights import (
 
 def show():
 
-    dashboard = load_table("dashboard")
+    dashboard = load_table("dashboard_summary")
 
     st.title("🎬 OTT Stream Intelligence")
     st.caption(

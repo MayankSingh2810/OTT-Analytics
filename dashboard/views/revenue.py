@@ -10,7 +10,7 @@ def show():
     st.title("💰 Revenue Analytics")
     st.caption("Subscription Revenue Intelligence")
 
-    revenue = load_table("revenue")
+    revenue = load_table("subscription_revenue")
 
     if revenue.empty:
         st.warning("Subscription Revenue table not found.")

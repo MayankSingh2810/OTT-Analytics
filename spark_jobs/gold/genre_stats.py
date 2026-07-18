@@ -1,18 +1,12 @@
-"""
-============================================================
-Gold Layer
-Genre Analytics
-Enterprise Version
-============================================================
-"""
-
 from pyspark.sql.functions import (
     count,
     countDistinct,
     avg,
     round,
     desc,
-    sum
+    sum,
+    col,
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -24,6 +18,7 @@ def build_genre_analytics(spark):
     print("Building Genre Analytics")
     print("=" * 70)
 
+    # Historical
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
@@ -32,9 +27,43 @@ def build_genre_analytics(spark):
         str(SILVER_DIR / "content")
     )
 
+    # Live
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
+    live = (
+        live
+        .drop("genre")
+        .join(
+            content.select("content_id", "genre", "imdb_rating"),
+            "content_id",
+            "left"
+        )
+        .withColumn("watch_minutes", col("watch_seconds") / 60)
+        .withColumn("watch_id", col("event_id"))
+        .withColumn("watch_start", col("timestamp"))
+        .withColumn("watch_end", col("timestamp"))
+        .withColumn("liked", lit("No"))
+        .withColumn("added_to_watchlist", lit("No"))
+        .withColumn("recommendation_source", lit("Live"))
+        .withColumn(
+            "completed",
+            (col("completion_pct") >= 90).cast("string")
+        )
+        .withColumn("engagement_level", lit("Live"))
+        .withColumn("binge_watch", lit("No"))
+        .select(watch.columns)
+    )
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     genre = (
 
-        watch
+        all_watch
 
         .join(
             content,

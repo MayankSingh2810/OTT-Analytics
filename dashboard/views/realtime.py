@@ -12,15 +12,15 @@ def show():
 
     st.caption("Enterprise Streaming Infrastructure")
 
-    watch = load_table("watch_time")
+    watch = load_table("watch_time_summary")
 
-    hourly = load_table("hourly")
+    hourly = load_table("hourly_usage")
 
-    country = load_table("country")
+    country = load_table("country_stats")
 
-    device = load_table("device")
+    device = load_table("device_stats")
 
-    dashboard = load_table("dashboard")
+    dashboard = load_table("dashboard_summary")
 
     st.subheader("Live Platform Status")
 
@@ -30,14 +30,14 @@ def show():
 
         metric_card(
             "Live Events",
-            "1,000,000"
+            f"{int(dashboard['total_events'].iloc[0]):,}"
         )
 
     with c2:
 
         metric_card(
             "Streaming Users",
-            f"{dashboard.registered_users.iloc[0]:,}"
+            f"{dashboard['unique_users'].iloc[0]:,}"
         )
 
     with c3:
@@ -104,11 +104,11 @@ def show():
 
             x="country",
 
-            y="total_events",
+            y="views",
 
             template="plotly_dark",
 
-            color="total_events"
+            color="views"
 
         )
 
@@ -139,19 +139,21 @@ def show():
     with left:
 
         st.subheader("Current Device Distribution")
+
         fig = px.pie(
 
-        device,
+            device,
 
-         names="device",
-   
-         values="total_events",
-  
-         hole=.55,
+            names="device",
 
-         template="plotly_dark"
+            values="total_events",
 
-)
+            hole=.55,
+
+            template="plotly_dark"
+
+        )
+
         fig.update_layout(
 
             paper_bgcolor="#0d1117",
@@ -191,52 +193,37 @@ def show():
     st.subheader("Live Event Feed")
 
     events = pd.DataFrame({
-
-        "Timestamp":[
-
-            "11:52:01",
-            "11:52:03",
-            "11:52:05",
-            "11:52:07",
-            "11:52:08",
-            "11:52:10"
-
+        "timestamp": pd.date_range(
+            end=pd.Timestamp.now(),
+            periods=20,
+            freq="min"
+        ),
+        "user_id": [f"U{1000 + i}" for i in range(20)],
+        "event_type": [
+            "play", "pause", "seek", "play", "stop",
+            "play", "buffer", "play", "pause", "play",
+            "seek", "play", "stop", "play", "buffer",
+            "play", "pause", "play", "seek", "play"
         ],
-
-        "User":[
-
-            "USR-1023",
-            "USR-8942",
-            "USR-7622",
-            "USR-9823",
-            "USR-2112",
-            "USR-6002"
-
+        "device": [
+            "Mobile", "Smart TV", "Web", "Mobile", "Tablet",
+            "Smart TV", "Web", "Mobile", "Mobile", "Smart TV",
+            "Web", "Tablet", "Mobile", "Smart TV", "Web",
+            "Mobile", "Tablet", "Smart TV", "Mobile", "Web"
         ],
-
-        "Action":[
-
-            "Started Movie",
-            "Paused",
-            "Liked Content",
-            "Completed Episode",
-            "Search",
-            "Continue Watching"
-
+        "country": [
+            "India", "USA", "UK", "India", "Germany",
+            "USA", "Canada", "India", "UK", "USA",
+            "Germany", "India", "Canada", "USA", "UK",
+            "India", "Germany", "USA", "Canada", "India"
         ]
-
     })
 
     st.dataframe(
-
         events,
-
         use_container_width=True,
-
         hide_index=True,
-
         height=260
-
     )
 
     st.success("Enterprise Streaming Platform Operational")

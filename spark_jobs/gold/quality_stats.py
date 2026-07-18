@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Quality Statistics
-Enterprise Version
+LIVE + Historical
 ==========================================================
 """
 
@@ -10,7 +10,8 @@ from pyspark.sql.functions import (
     count,
     avg,
     round,
-    desc
+    desc,
+    col
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -22,13 +23,28 @@ def build_quality_stats(spark):
     print("Building Quality Statistics")
     print("=" * 70)
 
-    events = spark.read.parquet(
+    watch = spark.read.parquet(
+        str(SILVER_DIR / "watch_history")
+    )
+
+    live = spark.read.parquet(
         str(SILVER_DIR / "live_events")
+    )
+
+    live = (
+        live
+        .withColumn("watch_minutes", col("watch_seconds") / 60)
+        .withColumn("buffer_ms", col("buffer_time_ms"))
+    )
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
     )
 
     quality = (
 
-        events
+        all_watch
 
         .groupBy("quality")
 
@@ -37,7 +53,7 @@ def build_quality_stats(spark):
             count("*").alias("events"),
 
             round(
-                avg("watch_seconds") / 60,
+                avg("watch_minutes"),
                 2
             ).alias("avg_watch_minutes"),
 
@@ -47,7 +63,7 @@ def build_quality_stats(spark):
             ).alias("avg_completion"),
 
             round(
-                avg("buffer_time_ms"),
+                avg("buffer_ms"),
                 2
             ).alias("avg_buffer_ms")
 

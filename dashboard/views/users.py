@@ -10,10 +10,10 @@ def show():
     st.title("👥 User Analytics")
     st.caption("Customer Retention & Audience Intelligence")
 
-    retention = load_table("retention")
-    daily = load_table("daily_users")
-    monthly = load_table("monthly_users")
-    dashboard = load_table("dashboard")
+    retention = load_table("user_retention")
+    daily = load_table("daily_active_users")
+    monthly = load_table("monthly_active_users")
+    dashboard = load_table("dashboard_summary")
 
     if retention.empty:
         st.warning("User Retention table not found.")
@@ -138,10 +138,10 @@ def show():
 
     st.divider()
 
-    if "account_status" in retention.columns:
+    if "user_status" in retention.columns:
 
         active = (
-            retention["account_status"]
+            retention["user_status"]
             .eq("Active")
             .mean()
             * 100

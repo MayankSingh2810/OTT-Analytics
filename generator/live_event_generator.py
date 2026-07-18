@@ -2,6 +2,7 @@ import json
 import random
 import time
 import uuid
+import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from collections import deque
@@ -12,6 +13,16 @@ from collections import deque
 
 OUTPUT_DIR = Path("streaming/events")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# =====================================================
+# Load REAL Content IDs
+# =====================================================
+
+content_df = pd.read_csv("data/raw/content.csv")
+
+CONTENT_IDS = content_df["content_id"].tolist()
+
+print(f"Loaded {len(CONTENT_IDS)} content IDs")
 
 EVENTS_PER_SECOND = 1
 MAX_EVENT_FILES = 500
@@ -125,7 +136,7 @@ while True:
 
             "session_id": SESSIONS[user],
 
-            "content_id": f"CNT-{random.randint(1,5000):05}",
+            "content_id": random.choice(CONTENT_IDS),
 
             "event_type": event_type,
 

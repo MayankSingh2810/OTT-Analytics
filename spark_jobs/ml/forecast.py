@@ -11,6 +11,9 @@ daily = pd.read_parquet(
     "data_lake/gold/daily_active_users"
 )
 
+print(daily.columns.tolist())
+print(daily.head())
+
 daily["event_date"] = pd.to_datetime(
     daily["event_date"]
 )
@@ -27,7 +30,7 @@ def create_forecast(series, days=30):
 
     model = ARIMA(
         series,
-        order=(1,1,1)
+        order=(1, 1, 1)
     )
 
     fitted = model.fit()
@@ -50,7 +53,7 @@ forecast_dau = create_forecast(
 # ==========================================================
 
 forecast_watch = create_forecast(
-    daily["watch_hours"]
+    daily["avg_watch_minutes"] / 60
 )
 
 # ==========================================================
@@ -67,7 +70,7 @@ forecast_events = create_forecast(
 
 future = pd.DataFrame({
 
-    "Day": range(1,31),
+    "Day": range(1, 31),
 
     "Forecast_DAU": forecast_dau.values,
 
@@ -94,8 +97,8 @@ future.to_parquet(
 
 )
 
-print("="*60)
+print("=" * 60)
 print("ARIMA FORECAST COMPLETED")
-print("="*60)
+print("=" * 60)
 
 print(future.head())

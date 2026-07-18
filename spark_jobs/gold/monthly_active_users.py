@@ -1,10 +1,3 @@
-"""
-============================================================
-Gold Layer
-Monthly Active Users
-============================================================
-"""
-
 from pyspark.sql.functions import (
     date_format,
     countDistinct,
@@ -12,7 +5,8 @@ from pyspark.sql.functions import (
     avg,
     sum,
     round,
-    col
+    col,
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -24,13 +18,52 @@ def build_monthly_active_users(spark):
     print("Building Monthly Active Users")
     print("=" * 70)
 
+    # -----------------------------
+    # Historical
+    # -----------------------------
+
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
 
+    # -----------------------------
+    # Live
+    # -----------------------------
+
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
+    live = (
+        live
+        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+        .withColumn("watch_id", col("event_id"))
+        .withColumn("watch_start", col("timestamp"))
+        .withColumn("watch_end", col("timestamp"))
+        .withColumn("liked", lit("No"))
+        .withColumn("added_to_watchlist", lit("No"))
+        .withColumn("recommendation_source", lit("Live"))
+        .withColumn(
+            "completed",
+            (col("completion_pct") >= 90).cast("string")
+        )
+        .withColumn("engagement_level", lit("Live"))
+        .withColumn("binge_watch", lit("No"))
+        .select(watch.columns)
+    )
+
+    # -----------------------------
+    # Merge
+    # -----------------------------
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     monthly = (
 
-        watch
+        all_watch
 
         .withColumn(
             "month",
@@ -70,7 +103,9 @@ def build_monthly_active_users(spark):
 
     output = GOLD_DIR / "monthly_active_users"
 
-    monthly.write.mode("overwrite").parquet(str(output))
+    monthly.write.mode("overwrite").parquet(
+        str(output)
+    )
 
     print(f"Rows : {monthly.count():,}")
     print(f"Saved : {output}")

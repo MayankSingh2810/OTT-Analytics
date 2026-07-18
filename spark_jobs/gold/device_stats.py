@@ -2,7 +2,7 @@
 ============================================================
 Gold Layer
 Device Statistics
-Enterprise Version
+LIVE + Historical
 ============================================================
 """
 
@@ -13,7 +13,6 @@ from pyspark.sql import functions as F
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 SILVER = PROJECT_ROOT / "data_lake" / "silver"
-
 GOLD = PROJECT_ROOT / "data_lake" / "gold" / "device_stats"
 
 
@@ -27,9 +26,26 @@ def build_device_stats(spark):
         str(SILVER / "watch_history")
     )
 
+    live = spark.read.parquet(
+        str(SILVER / "live_events")
+    )
+
+    live = (
+        live
+        .withColumn(
+            "watch_minutes",
+            F.round(F.col("watch_seconds") / 60, 2)
+        )
+    )
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     result = (
 
-        watch
+        all_watch
 
         .groupBy("device")
 

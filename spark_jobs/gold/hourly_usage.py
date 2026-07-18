@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Hourly Usage
-Enterprise Version
+LIVE + Historical
 ==========================================================
 """
 
@@ -12,7 +12,8 @@ from pyspark.sql.functions import (
     count,
     avg,
     round,
-    sum
+    sum,
+    to_timestamp
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -28,9 +29,30 @@ def build_hourly_usage(spark):
         str(SILVER_DIR / "watch_history")
     )
 
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
+    live = (
+        live
+        .withColumn(
+            "watch_minutes",
+            col("watch_seconds") / 60
+        )
+        .withColumn(
+            "watch_start",
+            to_timestamp(col("timestamp"))
+        )
+    )
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     hourly = (
 
-        watch
+        all_watch
 
         .withColumn(
             "hour",

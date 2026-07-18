@@ -25,7 +25,9 @@ def show():
     # LOAD DATA
     # ==========================================================
 
-    churn = load_table("churn")
+    churn = load_table("churn_features")
+    dashboard = load_table("dashboard_summary")
+    retention = load_table("user_retention")
 
     if churn.empty:
         st.error(
@@ -37,8 +39,6 @@ def show():
     gbt_metrics = load_gradient_boosted_metrics()
     comparison = load_model_comparison()
     forecast_df = load_forecast()
-
-    winner = comparison["Winner"]
 
     # ==========================================================
     # EXECUTIVE KPI CARDS
@@ -152,7 +152,7 @@ def show():
 
             "Winner",
 
-            winner["Best Model"]
+            comparison["Winner"]["Best Model"]
 
         )
 
@@ -160,7 +160,7 @@ def show():
 
             "Best AUC",
 
-            f"{winner['Best AUC']*100:.3f}%"
+            f"{comparison['Winner']['Best AUC']*100:.3f}%"
 
         )
 
@@ -183,82 +183,6 @@ def show():
     st.divider()
 
     # ==========================================================
-    # FEATURE IMPORTANCE
-    # ==========================================================
-
-    st.subheader("Feature Importance")
-
-    feature_importance = pd.DataFrame({
-
-        "Feature": [
-
-            "Days Inactive",
-            "Average Watch Minutes",
-            "Average Completion",
-            "Membership Years",
-            "Total Sessions",
-            "Like Ratio",
-            "Content Diversity",
-            "Weekend Activity"
-
-        ],
-
-        "Importance": [
-
-            0.29,
-            0.23,
-            0.16,
-            0.11,
-            0.08,
-            0.06,
-            0.04,
-            0.03
-
-        ]
-
-    })
-
-    fig = px.bar(
-
-        feature_importance,
-
-        x="Importance",
-
-        y="Feature",
-
-        orientation="h",
-
-        color="Importance",
-
-        text="Importance",
-
-        template="plotly_dark"
-
-    )
-
-    fig.update_layout(
-
-        height=450,
-
-        paper_bgcolor="#0d1117",
-
-        plot_bgcolor="#0d1117",
-
-        coloraxis_showscale=False
-
-    )
-
-    st.plotly_chart(
-
-        fig,
-
-        use_container_width=True
-
-    )
-
-    st.divider()
-
-    # ==========================================================
     # CHURN RISK ANALYSIS
     # ==========================================================
 
@@ -266,11 +190,15 @@ def show():
 
     churn["Risk"] = pd.cut(
 
-        churn["days_inactive"],
+        churn["churn_label"],
 
-        bins=[-1, 7, 30, 1000],
+        bins=[-1, 0, 0.5, 1],
 
-        labels=["Low", "Medium", "High"]
+        labels=[
+            "Low",
+            "Medium",
+            "High"
+        ]
 
     )
 
@@ -331,19 +259,21 @@ def show():
 
     with right:
 
-        high_risk = int((churn["days_inactive"] > 30).sum())
-
-        medium_risk = int(
+        high_risk = int(
             (
-                (churn["days_inactive"] > 7)
-                &
-                (churn["days_inactive"] <= 30)
+                churn["churn_label"] == 1
             ).sum()
         )
 
-        low_risk = int(
-            (churn["days_inactive"] <= 7).sum()
+        medium_risk = int(
+
+            (
+                churn["avg_completion"] < 70
+            ).sum()
+
         )
+
+        low_risk = len(churn) - high_risk
 
         st.metric(
             "High Risk Users",
@@ -656,18 +586,25 @@ def show():
 
     health = pd.DataFrame({
 
-        "Model": [
+        "Model":[
+
             "Random Forest",
             "Gradient Boosted Trees",
             "ARIMA Forecast",
             "ALS Recommendation"
+
         ],
 
-        "Health": [
-            98,
-            99,
-            96,
-            97
+        "Health":[
+
+            rf_metrics["auc"] * 100,
+
+            gbt_metrics["auc"] * 100,
+
+            95,
+
+            92
+
         ]
 
     })
@@ -782,8 +719,8 @@ def show():
         st.markdown(f"""
 ### 📌 AI Business Insights
 
-- **Best Production Model:** {winner['Best Model']}
-- **Highest AUC:** {winner['Best AUC']:.6f}
+- **Best Production Model:** {comparison['Winner']['Best Model']}
+- **Highest AUC:** {comparison['Winner']['Best AUC']:.6f}
 - **Average Watch Time:** {avg_watch:.1f} Minutes
 - **Average Completion:** {avg_completion:.2f}%
 - **High Risk Customers:** {risk_percentage:.2f}%
@@ -820,6 +757,7 @@ def show():
         )
 
     st.divider()
+
     # ==========================================================
     # ALS RECOMMENDATION ENGINE
     # ==========================================================
@@ -870,4 +808,3 @@ def show():
         st.success(
         f"⭐ Top Recommendation: **{best['Title']}** ({best['Genre']}) • Predicted Rating: **{best['Predicted Rating']}**"
         )
-  

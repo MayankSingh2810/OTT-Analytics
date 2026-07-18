@@ -92,6 +92,11 @@ silver_df = (
     )
 
     .withColumn(
+        "content_id",
+        upper(trim(col("content_id")))
+    )
+
+    .withColumn(
         "genre",
         trim(col("genre"))
     )

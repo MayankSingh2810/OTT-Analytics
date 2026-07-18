@@ -12,7 +12,7 @@ def show():
 
     content = load_table("content")
     top = load_table("top_content")
-    genre = load_table("genre")
+    genre = load_table("genre_analytics")
 
     if content.empty or top.empty or genre.empty:
         st.error("Content tables not found in MySQL.")
@@ -30,6 +30,8 @@ def show():
         "watch_hours",
         "unique_viewers",
         "imdb_rating",
+        "total_views",
+        "avg_imdb_rating",
     ]
 
     for df in [content, top, genre]:
@@ -51,8 +53,8 @@ def show():
             metric_card("Genres", "N/A")
 
     with c3:
-        if "views" in content.columns:
-            metric_card("Total Views", f"{int(content['views'].sum()):,}")
+        if "views" in top.columns:
+            metric_card("Total Views", f"{int(top['views'].sum()):,}")
         else:
             metric_card("Total Views", "N/A")
 
@@ -70,13 +72,13 @@ def show():
 
         st.subheader("🎭 Views by Genre")
 
-        if {"genre", "views"}.issubset(genre.columns):
+        if {"genre", "total_views"}.issubset(genre.columns):
 
             fig = px.bar(
                 genre,
                 x="genre",
-                y="views",
-                color="views",
+                y="total_views",
+                color="total_views",
                 template="plotly_dark"
             )
 
@@ -86,12 +88,12 @@ def show():
 
         st.subheader("⭐ Average Rating by Genre")
 
-        if {"genre", "avg_rating"}.issubset(genre.columns):
+        if {"genre", "avg_imdb_rating"}.issubset(genre.columns):
 
             fig = px.pie(
                 genre,
                 names="genre",
-                values="avg_rating",
+                values="avg_imdb_rating",
                 hole=.5,
                 template="plotly_dark"
             )

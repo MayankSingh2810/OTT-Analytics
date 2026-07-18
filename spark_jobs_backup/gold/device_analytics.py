@@ -3,14 +3,21 @@ from pyspark.sql.functions import *
 
 def build_device_analytics(spark):
 
-    df = spark.read.parquet("data_lake/silver/watch_history")
+    watch = spark.read.parquet("data_lake/silver/watch_history")
+    live = spark.read.parquet("data_lake/silver/live_events")
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
 
     device = (
-        df.groupBy("device")
+        all_watch
+        .groupBy("device")
         .agg(
             count("*").alias("views"),
-            avg("watch_seconds").alias("avg_watch_seconds"),
-            avg("completion_pct").alias("completion"),
+            round(avg("watch_seconds"), 2).alias("avg_watch_seconds"),
+            round(avg("completion_pct"), 2).alias("completion"),
             countDistinct("user_id").alias("users")
         )
         .orderBy(desc("views"))

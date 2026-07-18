@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Watch Time Summary
-Enterprise Version
+LIVE + Historical
 ==========================================================
 """
 
@@ -13,7 +13,8 @@ from pyspark.sql.functions import (
     count,
     countDistinct,
     when,
-    col
+    col,
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -29,9 +30,78 @@ def build_watch_time_summary(spark):
         str(SILVER_DIR / "watch_history")
     )
 
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
+    # Convert live events into watch_history schema
+    live = (
+
+        live
+
+        .withColumn(
+            "watch_id",
+            col("event_id")
+        )
+
+        .withColumn(
+            "watch_start",
+            col("timestamp")
+        )
+
+        .withColumn(
+            "watch_end",
+            col("timestamp")
+        )
+
+        .withColumn(
+            "watch_minutes",
+            round(col("watch_seconds") / 60, 2)
+        )
+
+        .withColumn(
+            "completed",
+            when(col("completion_pct") >= 90, "Yes")
+            .otherwise("No")
+        )
+
+        .withColumn(
+            "liked",
+            lit("No")
+        )
+
+        .withColumn(
+            "added_to_watchlist",
+            lit("No")
+        )
+
+        .withColumn(
+            "recommendation_source",
+            lit("Live")
+        )
+
+        .withColumn(
+            "engagement_level",
+            lit("Live")
+        )
+
+        .withColumn(
+            "binge_watch",
+            lit("No")
+        )
+
+        .select(watch.columns)
+
+    )
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     summary = (
 
-        watch
+        all_watch
 
         .agg(
 

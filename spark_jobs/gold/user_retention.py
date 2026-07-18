@@ -1,11 +1,3 @@
-"""
-==========================================================
-Gold Layer
-User Retention
-Enterprise Version
-==========================================================
-"""
-
 from pyspark.sql.functions import (
     count,
     avg,
@@ -14,7 +6,9 @@ from pyspark.sql.functions import (
     datediff,
     current_date,
     round,
-    when
+    when,
+    col,
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -26,6 +20,10 @@ def build_user_retention(spark):
     print("Building User Retention")
     print("=" * 70)
 
+    # ------------------------------------------------
+    # Historical
+    # ------------------------------------------------
+
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
@@ -34,9 +32,44 @@ def build_user_retention(spark):
         str(SILVER_DIR / "users")
     )
 
+    # ------------------------------------------------
+    # Live
+    # ------------------------------------------------
+
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
+    live = (
+        live
+        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+        .withColumn("watch_id", col("event_id"))
+        .withColumn("watch_start", col("timestamp"))
+        .withColumn("watch_end", col("timestamp"))
+        .withColumn("liked", lit("No"))
+        .withColumn("added_to_watchlist", lit("No"))
+        .withColumn("recommendation_source", lit("Live"))
+        .withColumn(
+            "completed",
+            (col("completion_pct") >= 90).cast("string")
+        )
+        .withColumn("engagement_level", lit("Live"))
+        .withColumn("binge_watch", lit("No"))
+        .select(watch.columns)
+    )
+
+    # ------------------------------------------------
+    # Merge
+    # ------------------------------------------------
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
     retention = (
 
-        watch
+        all_watch
 
         .groupBy("user_id")
 
@@ -61,38 +94,27 @@ def build_user_retention(spark):
         )
 
         .withColumn(
-
             "days_inactive",
-
             datediff(
                 current_date(),
-                "last_activity"
+                col("last_activity")
             )
-
         )
 
         .withColumn(
-
             "user_status",
-
             when(
-                datediff(
-                    current_date(),
-                    "last_activity"
-                ) <= 30,
+                col("days_inactive") <= 30,
                 "Active"
-            ).otherwise(
-                "Inactive"
-            )
-
+            ).otherwise("Inactive")
         )
 
-    )
+        .join(
+            users,
+            "user_id",
+            "left"
+        )
 
-    retention = retention.join(
-        users,
-        "user_id",
-        "left"
     )
 
     output = GOLD_DIR / "user_retention"
@@ -102,7 +124,6 @@ def build_user_retention(spark):
     )
 
     print(f"Rows : {retention.count():,}")
-
     print(f"Saved : {output}")
 
     return retention
