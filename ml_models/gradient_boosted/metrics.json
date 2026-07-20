@@ -1,8 +1,0 @@
-{
-    "algorithm": "Spark MLlib Gradient Boosted Trees",
-    "iterations": 100,
-    "max_depth": 6,
-    "auc": 0.9996386277512302,
-    "training_rows": 79895,
-    "testing_rows": 20098
-}

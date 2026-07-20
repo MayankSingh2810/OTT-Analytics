@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Content Performance
-Historical + Live
+(Historical + Live Events)
 ==========================================================
 """
 
@@ -11,9 +11,9 @@ from pyspark.sql.functions import (
     avg,
     round,
     desc,
-    lit,
+    when,
     col,
-    sum
+    lit
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -26,20 +26,83 @@ def build_content_performance(spark):
     print("=" * 70)
 
     # ----------------------------------------------------
-    # Historical Data
+    # Historical Watch History
     # ----------------------------------------------------
 
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
 
+    # ----------------------------------------------------
+    # Live Events
+    # ----------------------------------------------------
+
+    live = spark.read.parquet(
+        str(SILVER_DIR / "live_events")
+    )
+
     content = spark.read.parquet(
         str(SILVER_DIR / "content")
     )
 
-    historical = (
+    # ----------------------------------------------------
+    # Convert Live Events
+    # ----------------------------------------------------
 
-        watch
+    live = (
+
+        live
+
+        .withColumn("watch_id", col("event_id"))
+        .withColumn("watch_start", col("timestamp"))
+        .withColumn("watch_end", col("timestamp"))
+
+        .withColumn(
+            "watch_minutes",
+            round(col("watch_seconds") / 60, 2)
+        )
+
+        .withColumn(
+            "liked",
+            when(col("event_type") == "LIKE", "Yes")
+            .otherwise("No")
+        )
+
+        .withColumn(
+            "completed",
+            when(col("completion_pct") >= 90, "Yes")
+            .otherwise("No")
+        )
+
+        .withColumn("added_to_watchlist", lit("No"))
+        .withColumn("recommendation_source", lit("Live"))
+        .withColumn("engagement_level", lit("Live"))
+        .withColumn(
+            "binge_watch",
+            when(col("watch_seconds") >= 7200, "Yes")
+            .otherwise("No")
+        )
+
+        .select(watch.columns)
+
+    )
+
+    # ----------------------------------------------------
+    # Historical + Live
+    # ----------------------------------------------------
+
+    all_watch = watch.unionByName(
+        live,
+        allowMissingColumns=True
+    )
+
+    # ----------------------------------------------------
+    # Content Performance
+    # ----------------------------------------------------
+
+    performance = (
+
+        all_watch
 
         .join(content, "content_id")
 
@@ -51,139 +114,55 @@ def build_content_performance(spark):
 
         .agg(
 
-            count("*").alias("hist_views"),
-
-            avg("watch_minutes").alias("hist_watch"),
-
-            avg("completion_pct").alias("hist_completion"),
-
-            avg("imdb_rating").alias("hist_rating")
-
-        )
-
-    )
-
-    # ----------------------------------------------------
-    # Live Data
-    # ----------------------------------------------------
-
-    live = spark.read.parquet(
-        str(SILVER_DIR / "live_events")
-    )
-
-    live = (
-
-    live
-
-    .drop("genre")
-
-    .join(
-        content.select(
-            "content_id",
-            "title",
-            "genre"
-        ),
-        "content_id",
-        "left"
-    )
-
-        .withColumn(
-            "watch_minutes",
-            col("watch_seconds") / 60
-        )
-
-    )
-
-    live_metrics = (
-
-        live
-
-        .groupBy(
-            "content_id",
-            "title",
-            "genre"
-        )
-
-        .agg(
-
-            count("*").alias("live_views"),
-
-            avg("watch_minutes").alias("live_watch"),
-
-            avg("completion_pct").alias("live_completion"),
-
-            lit(0).alias("live_rating")
-
-        )
-
-    )
-
-    # ----------------------------------------------------
-    # Merge Historical + Live
-    # ----------------------------------------------------
-
-    performance = (
-
-        historical.alias("h")
-
-        .join(
-            live_metrics.alias("l"),
-            ["content_id", "title", "genre"],
-            "full"
-        )
-
-        .na.fill({
-            "hist_views": 0,
-            "live_views": 0,
-            "hist_watch": 0,
-            "live_watch": 0,
-            "hist_completion": 0,
-            "live_completion": 0,
-            "hist_rating": 0
-        })
-
-        .select(
-
-            col("content_id"),
-
-            col("title"),
-
-            col("genre"),
-
-            (
-                col("hist_views").cast("long")
-                +
-                col("live_views").cast("long")
-            ).alias("views"),
+            count("*").alias("views"),
 
             round(
-                col("hist_watch") + col("live_watch"),
+                avg("watch_minutes"),
                 2
             ).alias("avg_watch_minutes"),
 
             round(
-                col("hist_completion") + col("live_completion"),
+                avg("completion_pct"),
                 2
             ).alias("avg_completion"),
 
             round(
-                col("hist_rating"),
+                avg("imdb_rating"),
                 2
-            ).alias("avg_rating")
+            ).alias("avg_rating"),
+
+            round(
+                avg(
+                    when(col("liked") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("like_rate"),
+
+            round(
+                avg(
+                    when(col("completed") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("completion_rate"),
+
+            round(
+                avg(
+                    when(col("binge_watch") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("binge_watch_rate")
 
         )
 
-        .na.fill(0)
-
-        .orderBy(
-            desc("views")
-        )
+        .orderBy(desc("views"))
 
     )
 
     output = GOLD_DIR / "content_performance"
 
-    performance.write.mode("overwrite").parquet(str(output))
+    performance.write.mode("overwrite").parquet(
+        str(output)
+    )
 
     print(f"Rows : {performance.count():,}")
     print(f"Saved : {output}")

@@ -1,42 +1,52 @@
-"""
-============================================================
-Gold Layer
-Device Statistics
-LIVE + Historical
-============================================================
-"""
-
-from pathlib import Path
-
-from pyspark.sql import functions as F
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-SILVER = PROJECT_ROOT / "data_lake" / "silver"
-GOLD = PROJECT_ROOT / "data_lake" / "gold" / "device_stats"
-
-
 def build_device_stats(spark):
 
     print("=" * 70)
     print("Building Device Statistics")
     print("=" * 70)
 
+    # ----------------------------------------------------
+    # Historical Watch History
+    # ----------------------------------------------------
+
     watch = spark.read.parquet(
         str(SILVER / "watch_history")
     )
+
+    # ----------------------------------------------------
+    # Live Events
+    # ----------------------------------------------------
 
     live = spark.read.parquet(
         str(SILVER / "live_events")
     )
 
+    # Convert live events to historical schema
+
     live = (
         live
+        .withColumn("watch_id", F.col("event_id"))
+        .withColumn("watch_start", F.col("timestamp"))
+        .withColumn("watch_end", F.col("timestamp"))
         .withColumn(
             "watch_minutes",
             F.round(F.col("watch_seconds") / 60, 2)
         )
+        .withColumn(
+            "completed",
+            F.when(F.col("completion_pct") >= 90, "Yes")
+             .otherwise("No")
+        )
+        .withColumn("liked", F.lit("No"))
+        .withColumn("added_to_watchlist", F.lit("No"))
+        .withColumn("recommendation_source", F.lit("Live"))
+        .withColumn("engagement_level", F.lit("Live"))
+        .withColumn("binge_watch", F.lit("No"))
+        .select(watch.columns)
     )
+
+    # ----------------------------------------------------
+    # Historical + Live
+    # ----------------------------------------------------
 
     all_watch = watch.unionByName(
         live,

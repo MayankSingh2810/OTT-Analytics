@@ -1,58 +1,33 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 
-# =====================================================
-# Spark Session
-# =====================================================
-
 spark = (
     SparkSession.builder
     .appName("OTT Bronze Streaming")
+    .config("spark.sql.streaming.forceDeleteTempCheckpointLocation", "true")
     .getOrCreate()
 )
 
 spark.sparkContext.setLogLevel("WARN")
 
-# =====================================================
-# Schema
-# =====================================================
-
 schema = StructType([
-
-    StructField("event_id", StringType(), True),
-    StructField("timestamp", StringType(), True),
-
-    StructField("user_id", StringType(), True),
-    StructField("session_id", StringType(), True),
-    StructField("content_id", StringType(), True),
-
-    StructField("event_type", StringType(), True),
-
-    StructField("device", StringType(), True),
-
-    StructField("subscription_plan", StringType(), True),
-
-    StructField("country", StringType(), True),
-
-    StructField("network", StringType(), True),
-
-    StructField("genre", StringType(), True),
-
-    StructField("quality", StringType(), True),
-
-    StructField("watch_seconds", IntegerType(), True),
-
-    StructField("completion_pct", DoubleType(), True),
-
-    StructField("buffer_time_ms", IntegerType(), True),
-
-    StructField("rating", IntegerType(), True)
-
+    StructField("event_id", StringType()),
+    StructField("timestamp", StringType()),
+    StructField("user_id", StringType()),
+    StructField("session_id", StringType()),
+    StructField("content_id", StringType()),
+    StructField("event_type", StringType()),
+    StructField("device", StringType()),
+    StructField("subscription_plan", StringType()),
+    StructField("country", StringType()),
+    StructField("network", StringType()),
+    StructField("genre", StringType()),
+    StructField("quality", StringType()),
+    StructField("watch_seconds", IntegerType()),
+    StructField("completion_pct", DoubleType()),
+    StructField("buffer_time_ms", IntegerType()),
+    StructField("rating", IntegerType())
 ])
-
-# =====================================================
-# Read JSON Stream
-# =====================================================
 
 stream = (
     spark.readStream
@@ -61,27 +36,18 @@ stream = (
     .json("streaming/events")
 )
 
-# =====================================================
-# Write Bronze Layer
-# =====================================================
-
 query = (
     stream.writeStream
     .format("parquet")
     .outputMode("append")
-    .option(
-        "path",
-        "data_lake/bronze/live_events"
-    )
-    .option(
-        "checkpointLocation",
-        "data_lake/checkpoints/bronze"
-    )
+    .option("path", "data_lake/bronze/live_events")
+    .option("checkpointLocation", "data_lake/checkpoints/bronze")
+    .trigger(processingTime="5 seconds")
     .start()
 )
 
-print("=" * 60)
-print("Bronze Streaming Started")
-print("=" * 60)
+print("=" * 70)
+print("LIVE EVENT BRONZE STREAM STARTED")
+print("=" * 70)
 
 query.awaitTermination()

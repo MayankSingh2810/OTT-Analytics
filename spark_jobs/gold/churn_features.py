@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Enterprise Churn Feature Store
-(Historical + Live)
+(Historical + Live Users + Live Events)
 ==========================================================
 """
 
@@ -16,10 +16,11 @@ from pyspark.sql.functions import (
     round,
     when,
     col,
-    lit
+    lit,
 )
 
 from config import SILVER_DIR, GOLD_DIR
+from spark_jobs.gold.load_all_users import load_all_users
 
 
 def build_churn_features(spark):
@@ -28,54 +29,76 @@ def build_churn_features(spark):
     print("Building Enterprise Churn Features")
     print("=" * 70)
 
-    # Historical
+    # ======================================================
+    # Historical Watch History
+    # ======================================================
+
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
 
-    # Live
-    live = spark.read.parquet(
-        str(SILVER_DIR / "live_events")
-    )
+    # ======================================================
+    # Live Events
+    # ======================================================
 
-    users = spark.read.parquet(
-        str(SILVER_DIR / "users")
-    )
+    try:
+
+        live = spark.read.parquet(
+            str(SILVER_DIR / "live_events")
+        )
+
+        live = (
+            live
+            .withColumn("watch_id", col("event_id"))
+            .withColumn("watch_start", col("timestamp"))
+            .withColumn("watch_end", col("timestamp"))
+            .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+            .withColumn(
+                "liked",
+                when(col("event_type") == "LIKE", "Yes").otherwise("No")
+            )
+            .withColumn("added_to_watchlist", lit("No"))
+            .withColumn(
+                "completed",
+                when(col("completion_pct") >= 90, "Yes").otherwise("No")
+            )
+            .withColumn("recommendation_source", lit("Live"))
+            .withColumn("engagement_level", lit("Live"))
+            .withColumn(
+                "binge_watch",
+                when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
+            )
+            .select(watch.columns)
+        )
+
+        all_watch = watch.unionByName(
+            live,
+            allowMissingColumns=True
+        )
+
+    except Exception:
+
+        print("No live events found. Using historical watch history.")
+
+        all_watch = watch
+
+    # ======================================================
+    # Users
+    # ======================================================
+
+    users = load_all_users(spark)
+
+    # ======================================================
+    # Subscriptions
+    # ======================================================
 
     subscriptions = spark.read.parquet(
         str(SILVER_DIR / "subscriptions")
     )
 
-    # Convert live events into watch_history format
-    live = (
-        live
-        .withColumn("watch_id", col("event_id"))
-        .withColumn("watch_start", col("timestamp"))
-        .withColumn("watch_end", col("timestamp"))
-        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
-        .withColumn(
-            "liked",
-            when(col("event_type") == "LIKE", "Yes").otherwise("No")
-        )
-        .withColumn("added_to_watchlist", lit("No"))
-        .withColumn(
-            "completed",
-            when(col("completion_pct") >= 90, "Yes").otherwise("No")
-        )
-        .withColumn("recommendation_source", lit("Live"))
-        .withColumn("engagement_level", lit("Live"))
-        .withColumn(
-            "binge_watch",
-            when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
-        )
-        .select(watch.columns)
-    )
-
-    # Merge historical + live
-    all_watch = watch.unionByName(
-        live,
-        allowMissingColumns=True
-    )
+    # ======================================================
+    # Feature Engineering
+    # ======================================================
 
     features = (
 
@@ -142,6 +165,10 @@ def build_churn_features(spark):
 
     )
 
+    # ======================================================
+    # Join User + Subscription Information
+    # ======================================================
+
     features = (
 
         features
@@ -160,10 +187,16 @@ def build_churn_features(spark):
 
     )
 
+    # ======================================================
+    # Save
+    # ======================================================
+
     output = GOLD_DIR / "churn_features"
 
-    features.write.mode("overwrite").parquet(
-        str(output)
+    (
+        features.write
+        .mode("overwrite")
+        .parquet(str(output))
     )
 
     print(f"Rows : {features.count():,}")

@@ -1,8 +1,0 @@
-{
-    "algorithm": "Spark MLlib Random Forest",
-    "trees": 100,
-    "max_depth": 8,
-    "auc": 0.9996306226069877,
-    "training_rows": 79895,
-    "testing_rows": 20098
-}

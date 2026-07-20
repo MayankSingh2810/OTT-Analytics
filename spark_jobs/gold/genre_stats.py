@@ -6,7 +6,8 @@ from pyspark.sql.functions import (
     desc,
     sum,
     col,
-    lit
+    lit,
+    when
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -18,19 +19,18 @@ def build_genre_analytics(spark):
     print("Building Genre Analytics")
     print("=" * 70)
 
+    # =====================================================
     # Historical
-    watch = spark.read.parquet(
-        str(SILVER_DIR / "watch_history")
-    )
+    # =====================================================
 
-    content = spark.read.parquet(
-        str(SILVER_DIR / "content")
-    )
+    watch = spark.read.parquet(str(SILVER_DIR / "watch_history"))
+    content = spark.read.parquet(str(SILVER_DIR / "content"))
 
-    # Live
-    live = spark.read.parquet(
-        str(SILVER_DIR / "live_events")
-    )
+    # =====================================================
+    # Live Events
+    # =====================================================
+
+    live = spark.read.parquet(str(SILVER_DIR / "live_events"))
 
     live = (
         live
@@ -40,40 +40,46 @@ def build_genre_analytics(spark):
             "content_id",
             "left"
         )
-        .withColumn("watch_minutes", col("watch_seconds") / 60)
         .withColumn("watch_id", col("event_id"))
         .withColumn("watch_start", col("timestamp"))
         .withColumn("watch_end", col("timestamp"))
-        .withColumn("liked", lit("No"))
+        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+        .withColumn(
+            "liked",
+            when(col("event_type") == "LIKE", "Yes").otherwise("No")
+        )
         .withColumn("added_to_watchlist", lit("No"))
-        .withColumn("recommendation_source", lit("Live"))
         .withColumn(
             "completed",
-            (col("completion_pct") >= 90).cast("string")
+            when(col("completion_pct") >= 90, "Yes").otherwise("No")
         )
+        .withColumn("recommendation_source", lit("Live"))
         .withColumn("engagement_level", lit("Live"))
-        .withColumn("binge_watch", lit("No"))
+        .withColumn(
+            "binge_watch",
+            when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
+        )
         .select(watch.columns)
     )
+
+    # =====================================================
+    # Historical + Live
+    # =====================================================
 
     all_watch = watch.unionByName(
         live,
         allowMissingColumns=True
     )
 
+    # =====================================================
+    # Genre Analytics
+    # =====================================================
+
     genre = (
-
         all_watch
-
-        .join(
-            content,
-            "content_id"
-        )
-
+        .join(content, "content_id")
         .groupBy("genre")
-
         .agg(
-
             count("*").alias("total_views"),
 
             countDistinct("user_id").alias("unique_viewers"),
@@ -96,21 +102,35 @@ def build_genre_analytics(spark):
             round(
                 sum("watch_minutes") / 60,
                 2
-            ).alias("total_watch_hours")
+            ).alias("total_watch_hours"),
 
+            round(
+                avg(
+                    when(col("liked") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("like_rate"),
+
+            round(
+                avg(
+                    when(col("completed") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("completion_rate"),
+
+            round(
+                avg(
+                    when(col("binge_watch") == "Yes", 1).otherwise(0)
+                ),
+                2
+            ).alias("binge_watch_rate")
         )
-
-        .orderBy(
-            desc("total_views")
-        )
-
+        .orderBy(desc("total_views"))
     )
 
     output = GOLD_DIR / "genre_analytics"
 
-    genre.write.mode("overwrite").parquet(
-        str(output)
-    )
+    genre.write.mode("overwrite").parquet(str(output))
 
     print(f"Rows : {genre.count():,}")
     print(f"Saved : {output}")

@@ -20,9 +20,9 @@ def build_user_retention(spark):
     print("Building User Retention")
     print("=" * 70)
 
-    # ------------------------------------------------
+    # =====================================================
     # Historical
-    # ------------------------------------------------
+    # =====================================================
 
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
@@ -32,9 +32,9 @@ def build_user_retention(spark):
         str(SILVER_DIR / "users")
     )
 
-    # ------------------------------------------------
-    # Live
-    # ------------------------------------------------
+    # =====================================================
+    # Live Events
+    # =====================================================
 
     live = spark.read.parquet(
         str(SILVER_DIR / "live_events")
@@ -42,30 +42,43 @@ def build_user_retention(spark):
 
     live = (
         live
-        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
         .withColumn("watch_id", col("event_id"))
         .withColumn("watch_start", col("timestamp"))
         .withColumn("watch_end", col("timestamp"))
-        .withColumn("liked", lit("No"))
+        .withColumn(
+            "watch_minutes",
+            round(col("watch_seconds") / 60, 2)
+        )
+        .withColumn(
+            "liked",
+            when(col("event_type") == "LIKE", "Yes").otherwise("No")
+        )
         .withColumn("added_to_watchlist", lit("No"))
-        .withColumn("recommendation_source", lit("Live"))
         .withColumn(
             "completed",
-            (col("completion_pct") >= 90).cast("string")
+            when(col("completion_pct") >= 90, "Yes").otherwise("No")
         )
+        .withColumn("recommendation_source", lit("Live"))
         .withColumn("engagement_level", lit("Live"))
-        .withColumn("binge_watch", lit("No"))
+        .withColumn(
+            "binge_watch",
+            when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
+        )
         .select(watch.columns)
     )
 
-    # ------------------------------------------------
-    # Merge
-    # ------------------------------------------------
+    # =====================================================
+    # Historical + Live
+    # =====================================================
 
     all_watch = watch.unionByName(
         live,
         allowMissingColumns=True
     )
+
+    # =====================================================
+    # Retention Features
+    # =====================================================
 
     retention = (
 

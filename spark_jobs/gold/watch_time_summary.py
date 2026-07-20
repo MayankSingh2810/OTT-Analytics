@@ -2,7 +2,7 @@
 ==========================================================
 Gold Layer
 Watch Time Summary
-LIVE + Historical
+(Historical + Live Events)
 ==========================================================
 """
 
@@ -26,15 +26,26 @@ def build_watch_time_summary(spark):
     print("Building Watch Time Summary")
     print("=" * 70)
 
+    # =====================================================
+    # Historical
+    # =====================================================
+
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
+
+    # =====================================================
+    # Live Events
+    # =====================================================
 
     live = spark.read.parquet(
         str(SILVER_DIR / "live_events")
     )
 
-    # Convert live events into watch_history schema
+    # =====================================================
+    # Convert Live -> Watch History Schema
+    # =====================================================
+
     live = (
 
         live
@@ -60,19 +71,20 @@ def build_watch_time_summary(spark):
         )
 
         .withColumn(
-            "completed",
-            when(col("completion_pct") >= 90, "Yes")
-            .otherwise("No")
-        )
-
-        .withColumn(
             "liked",
-            lit("No")
+            when(col("event_type") == "LIKE", "Yes")
+            .otherwise("No")
         )
 
         .withColumn(
             "added_to_watchlist",
             lit("No")
+        )
+
+        .withColumn(
+            "completed",
+            when(col("completion_pct") >= 90, "Yes")
+            .otherwise("No")
         )
 
         .withColumn(
@@ -87,17 +99,26 @@ def build_watch_time_summary(spark):
 
         .withColumn(
             "binge_watch",
-            lit("No")
+            when(col("watch_seconds") >= 7200, "Yes")
+            .otherwise("No")
         )
 
         .select(watch.columns)
 
     )
 
+    # =====================================================
+    # Merge Historical + Live Events
+    # =====================================================
+
     all_watch = watch.unionByName(
         live,
         allowMissingColumns=True
     )
+
+    # =====================================================
+    # Build Summary
+    # =====================================================
 
     summary = (
 
@@ -105,11 +126,14 @@ def build_watch_time_summary(spark):
 
         .agg(
 
-            count("*").alias("total_events"),
+            count("*")
+                .alias("total_events"),
 
-            countDistinct("user_id").alias("unique_users"),
+            countDistinct("user_id")
+                .alias("unique_users"),
 
-            countDistinct("content_id").alias("unique_content"),
+            countDistinct("content_id")
+                .alias("unique_content"),
 
             round(
                 sum("watch_minutes") / 60,
@@ -153,8 +177,10 @@ def build_watch_time_summary(spark):
 
     output = GOLD_DIR / "watch_time_summary"
 
-    summary.write.mode("overwrite").parquet(
-        str(output)
+    (
+        summary.write
+        .mode("overwrite")
+        .parquet(str(output))
     )
 
     print(f"Rows : {summary.count():,}")

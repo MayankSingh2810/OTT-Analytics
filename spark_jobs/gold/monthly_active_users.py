@@ -6,7 +6,8 @@ from pyspark.sql.functions import (
     sum,
     round,
     col,
-    lit
+    lit,
+    when
 )
 
 from config import SILVER_DIR, GOLD_DIR
@@ -18,48 +19,90 @@ def build_monthly_active_users(spark):
     print("Building Monthly Active Users")
     print("=" * 70)
 
-    # -----------------------------
-    # Historical
-    # -----------------------------
+    # =====================================================
+    # Historical Watch History
+    # =====================================================
 
     watch = spark.read.parquet(
         str(SILVER_DIR / "watch_history")
     )
 
-    # -----------------------------
-    # Live
-    # -----------------------------
+    # =====================================================
+    # Live Events
+    # =====================================================
 
     live = spark.read.parquet(
         str(SILVER_DIR / "live_events")
     )
 
+    # =====================================================
+    # Convert Live -> Watch History Schema
+    # =====================================================
+
     live = (
+
         live
-        .withColumn("watch_minutes", round(col("watch_seconds") / 60, 2))
+
         .withColumn("watch_id", col("event_id"))
+
         .withColumn("watch_start", col("timestamp"))
+
         .withColumn("watch_end", col("timestamp"))
-        .withColumn("liked", lit("No"))
-        .withColumn("added_to_watchlist", lit("No"))
-        .withColumn("recommendation_source", lit("Live"))
+
+        .withColumn(
+            "watch_minutes",
+            round(col("watch_seconds") / 60, 2)
+        )
+
+        .withColumn(
+            "liked",
+            when(col("event_type") == "LIKE", "Yes")
+            .otherwise("No")
+        )
+
+        .withColumn(
+            "added_to_watchlist",
+            lit("No")
+        )
+
         .withColumn(
             "completed",
-            (col("completion_pct") >= 90).cast("string")
+            when(col("completion_pct") >= 90, "Yes")
+            .otherwise("No")
         )
-        .withColumn("engagement_level", lit("Live"))
-        .withColumn("binge_watch", lit("No"))
+
+        .withColumn(
+            "recommendation_source",
+            lit("Live")
+        )
+
+        .withColumn(
+            "engagement_level",
+            lit("Live")
+        )
+
+        .withColumn(
+            "binge_watch",
+            when(col("watch_seconds") >= 7200, "Yes")
+            .otherwise("No")
+        )
+
         .select(watch.columns)
+
     )
 
-    # -----------------------------
-    # Merge
-    # -----------------------------
+    # =====================================================
+    # Merge Historical + Live Events
+    # =====================================================
 
     all_watch = watch.unionByName(
         live,
         allowMissingColumns=True
     )
+
+    # =====================================================
+    # Monthly KPIs
+    # =====================================================
 
     monthly = (
 
@@ -75,10 +118,10 @@ def build_monthly_active_users(spark):
         .agg(
 
             countDistinct("user_id")
-            .alias("monthly_active_users"),
+                .alias("monthly_active_users"),
 
             count("*")
-            .alias("total_events"),
+                .alias("total_events"),
 
             round(
                 sum("watch_minutes") / 60,
@@ -101,10 +144,16 @@ def build_monthly_active_users(spark):
 
     )
 
+    # =====================================================
+    # Save
+    # =====================================================
+
     output = GOLD_DIR / "monthly_active_users"
 
-    monthly.write.mode("overwrite").parquet(
-        str(output)
+    (
+        monthly.write
+        .mode("overwrite")
+        .parquet(str(output))
     )
 
     print(f"Rows : {monthly.count():,}")
