@@ -7,17 +7,11 @@ def metric_card(title, value, delta=None):
 
         st.caption(title)
 
-        st.markdown(
-            f"""
-            <h2 style="margin-bottom:0px;">
-                {value}
-            </h2>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.subheader(str(value))
 
         if delta is not None:
+
             if str(delta).startswith("-"):
-                st.error(delta)
+                st.error(f"▼ {delta}")
             else:
-                st.success(delta)
+                st.success(f"▲ {delta}")

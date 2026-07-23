@@ -13,6 +13,10 @@ from views.ml import show as ml
 from views.realtime import show as realtime
 
 
+# -----------------------------------------------------
+# Streamlit Configuration
+# -----------------------------------------------------
+
 st.set_page_config(
     page_title=APP_TITLE,
     page_icon="🎬",
@@ -20,10 +24,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Apply global styling
+# -----------------------------------------------------
+# Global Theme
+# -----------------------------------------------------
+
 apply_theme()
 
+# -----------------------------------------------------
+# Sidebar
+# -----------------------------------------------------
+
 page = sidebar()
+
+# -----------------------------------------------------
+# Routes
+# -----------------------------------------------------
 
 PAGES = {
     "🏠 Executive Dashboard": executive,
@@ -34,4 +49,9 @@ PAGES = {
     "⚡ Real-Time Monitoring": realtime,
 }
 
-PAGES[page]()
+page_function = PAGES.get(page)
+
+if page_function:
+    page_function()
+else:
+    st.error("Selected page could not be found.")

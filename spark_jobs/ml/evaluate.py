@@ -24,27 +24,27 @@ with open(GBT_METRICS) as f:
 
 comparison = {
 
-    "Random Forest":{
+    "Random Forest": {
 
-        "Algorithm":rf["algorithm"],
+        "Algorithm": rf["algorithm"],
 
-        "AUC":rf["auc"],
+        "AUC": rf["auc"],
 
-        "Training Rows":rf["training_rows"],
+        "Training Rows": rf["training_rows"],
 
-        "Testing Rows":rf["testing_rows"]
+        "Testing Rows": rf["testing_rows"]
 
     },
 
-    "Gradient Boosted Trees":{
+    "Gradient Boosted Trees": {
 
-        "Algorithm":gbt["algorithm"],
+        "Algorithm": gbt["algorithm"],
 
-        "AUC":gbt["auc"],
+        "AUC": gbt["auc"],
 
-        "Training Rows":gbt["training_rows"],
+        "Training Rows": gbt["training_rows"],
 
-        "Testing Rows":gbt["testing_rows"]
+        "Testing Rows": gbt["testing_rows"]
 
     }
 
@@ -58,9 +58,11 @@ if rf["auc"] >= gbt["auc"]:
 
     best = {
 
-        "Best Model":"Random Forest",
+        "Best Model": "Random Forest",
 
-        "Best AUC":rf["auc"]
+        "Best AUC": rf["auc"],
+
+        "Selection Reason": "Highest ROC-AUC"
 
     }
 
@@ -68,9 +70,11 @@ else:
 
     best = {
 
-        "Best Model":"Gradient Boosted Trees",
+        "Best Model": "Gradient Boosted Trees",
 
-        "Best AUC":gbt["auc"]
+        "Best AUC": gbt["auc"],
+
+        "Selection Reason": "Highest ROC-AUC"
 
     }
 
@@ -103,9 +107,9 @@ with open(
 # PRINT
 # ==========================================================
 
-print("="*70)
+print("=" * 70)
 print("MODEL COMPARISON")
-print("="*70)
+print("=" * 70)
 
 print()
 
@@ -116,11 +120,10 @@ print("Gradient Boosted AUC     :", gbt["auc"])
 print()
 
 print("BEST MODEL :", best["Best Model"])
-
 print("BEST AUC   :", best["Best AUC"])
+print("REASON     :", best["Selection Reason"])
 
 print()
 
 print("Saved : ml_models/evaluation/model_comparison.json")
-
-print("="*70)
+print("=" * 70)

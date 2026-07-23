@@ -73,15 +73,14 @@ def load_model_comparison():
 def load_forecast():
     return load_parquet("arima/forecast.parquet")
 
+
+# =====================================================
+# ALS RECOMMENDATIONS
+# =====================================================
+
 def load_als_recommendations(user_index=0, limit=10):
 
-    from pathlib import Path
-    import pandas as pd
-
-    path = Path("../ml_models/als/recommendations")
-
-    if not path.exists():
-        path = Path("ml_models/als/recommendations")
+    path = ML_MODELS / "als" / "recommendations"
 
     if not path.exists():
         return pd.DataFrame()
@@ -101,5 +100,6 @@ def load_als_recommendations(user_index=0, limit=10):
 
         return df
 
-    except Exception:
+    except Exception as e:
+        print(e)
         return pd.DataFrame()

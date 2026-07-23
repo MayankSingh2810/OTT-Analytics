@@ -65,7 +65,7 @@ assembler = VectorAssembler(
 
 dataset = assembler.transform(df)
 
-train, test = dataset.randomSplit([0.8,0.2], seed=42)
+train, test = dataset.randomSplit([0.8, 0.2], seed=42)
 
 # ==========================================================
 # Gradient Boosted Trees
@@ -99,9 +99,24 @@ evaluator = BinaryClassificationEvaluator(
 
 auc = evaluator.evaluate(predictions)
 
-print("="*60)
+print("=" * 60)
 print("Gradient Boosted Trees AUC :", auc)
-print("="*60)
+print("=" * 60)
+
+# ==========================================================
+# Feature Importance
+# ==========================================================
+
+print("\nFeature Importance")
+
+for feature, importance in zip(feature_columns, model.featureImportances):
+    print(f"{feature:25} {importance:.4f}")
+
+# ==========================================================
+# Ensure Output Directory Exists
+# ==========================================================
+
+os.makedirs("ml_models/gradient_boosted", exist_ok=True)
 
 # ==========================================================
 # Save Model
@@ -111,21 +126,36 @@ model_path = "ml_models/gradient_boosted/model"
 
 model.write().overwrite().save(model_path)
 
-os.makedirs("ml_models/gradient_boosted", exist_ok=True)
+# ==========================================================
+# Save Predictions
+# ==========================================================
+
+predictions.select(
+    "user_id",
+    "label",
+    "prediction",
+    "probability"
+).write.mode("overwrite").parquet(
+    "ml_models/gradient_boosted/predictions"
+)
+
+# ==========================================================
+# Save Metrics
+# ==========================================================
 
 metrics = {
 
-    "algorithm":"Spark MLlib Gradient Boosted Trees",
+    "algorithm": "Spark MLlib Gradient Boosted Trees",
 
-    "iterations":100,
+    "iterations": 100,
 
-    "max_depth":6,
+    "max_depth": 6,
 
-    "auc":float(auc),
+    "auc": float(auc),
 
-    "training_rows":train.count(),
+    "training_rows": train.count(),
 
-    "testing_rows":test.count()
+    "testing_rows": test.count()
 
 }
 
@@ -134,7 +164,25 @@ with open(
     "w"
 ) as f:
 
-    json.dump(metrics,f,indent=4)
+    json.dump(metrics, f, indent=4)
+
+# ==========================================================
+# Save Feature Importance
+# ==========================================================
+
+feature_importance = {
+    feature: float(importance)
+    for feature, importance in zip(
+        feature_columns,
+        model.featureImportances
+    )
+}
+
+with open(
+    "ml_models/gradient_boosted/feature_importance.json",
+    "w"
+) as f:
+    json.dump(feature_importance, f, indent=4)
 
 print("GBT Model Saved Successfully")
 

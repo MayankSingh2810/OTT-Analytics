@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-
 from statsmodels.tsa.arima.model import ARIMA
 
 # ==========================================================
@@ -14,31 +13,32 @@ daily = pd.read_parquet(
 print(daily.columns.tolist())
 print(daily.head())
 
-daily["event_date"] = pd.to_datetime(
-    daily["event_date"]
-)
+# ==========================================================
+# Preprocessing: Proper Time-Series Index
+# ==========================================================
 
-daily = daily.sort_values(
-    "event_date"
-)
+daily["event_date"] = pd.to_datetime(daily["event_date"])
+
+daily = daily.sort_values("event_date")
+
+daily = daily.set_index("event_date")
+
+daily = daily.asfreq("D")
+
+daily = daily.ffill()
 
 # ==========================================================
 # Forecast Function
 # ==========================================================
 
 def create_forecast(series, days=30):
-
     model = ARIMA(
         series,
         order=(1, 1, 1)
     )
-
     fitted = model.fit()
-
     prediction = fitted.forecast(days)
-
     return prediction
-
 
 # ==========================================================
 # Forecast DAU
@@ -69,15 +69,10 @@ forecast_events = create_forecast(
 # ==========================================================
 
 future = pd.DataFrame({
-
     "Day": range(1, 31),
-
     "Forecast_DAU": forecast_dau.values,
-
     "Forecast_Watch_Hours": forecast_watch.values,
-
     "Forecast_Total_Events": forecast_events.values
-
 })
 
 # ==========================================================
@@ -90,15 +85,11 @@ os.makedirs(
 )
 
 future.to_parquet(
-
     "ml_models/arima/forecast.parquet",
-
     index=False
-
 )
 
 print("=" * 60)
 print("ARIMA FORECAST COMPLETED")
 print("=" * 60)
-
 print(future.head())

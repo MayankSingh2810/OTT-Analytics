@@ -23,13 +23,28 @@ df = spark.read.parquet(
 print(f"Loaded {df.count()} users")
 
 # ==========================================================
-# Create Churn Label
+# Create Churn Label (composite score, not a single-feature rule)
 # ==========================================================
 
 df = df.withColumn(
-    "label",
-    when(col("days_inactive") > 30, 1).otherwise(0)
+    "churn_score",
+    (
+        when(col("days_inactive") > 45, 1).otherwise(0)
+        +
+        when(col("avg_completion") < 50, 1).otherwise(0)
+        +
+        when(col("avg_watch_minutes") < 60, 1).otherwise(0)
+        +
+        when(col("total_sessions") < 5, 1).otherwise(0)
+        +
+        when(col("account_status") == "Inactive", 1).otherwise(0)
+    )
 )
+
+df = df.withColumn(
+    "label",
+    when(col("churn_score") >= 3, 1).otherwise(0)
+).drop("churn_score")
 
 # ==========================================================
 # Encode Categorical Features

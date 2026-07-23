@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pyspark.sql.functions import (
     avg,
     count,
@@ -10,7 +8,7 @@ from pyspark.sql.functions import (
     when
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from config import SILVER_DIR, GOLD_DIR
 
 
 def build_country_stats(spark):
@@ -19,29 +17,22 @@ def build_country_stats(spark):
     print("Building Country Statistics")
     print("=" * 70)
 
-    SILVER = PROJECT_ROOT / "data_lake" / "silver"
-
     # =====================================================
     # Historical
     # =====================================================
 
-    watch = spark.read.parquet(str(SILVER / "watch_history"))
-    users = spark.read.parquet(str(SILVER / "users"))
-    content = spark.read.parquet(str(SILVER / "content"))
+    watch = spark.read.parquet(str(SILVER_DIR / "watch_history"))
+    users = spark.read.parquet(str(SILVER_DIR / "users"))
+    content = spark.read.parquet(str(SILVER_DIR / "content"))
 
     # =====================================================
     # Live Events
     # =====================================================
 
-    live = spark.read.parquet(str(SILVER / "live_events"))
+    live = spark.read.parquet(str(SILVER_DIR / "live_events"))
 
     live = (
         live
-        .join(
-            content.select("content_id"),
-            "content_id",
-            "left"
-        )
         .withColumn("watch_id", col("event_id"))
         .withColumn("watch_start", col("timestamp"))
         .withColumn("watch_end", col("timestamp"))
@@ -108,12 +99,7 @@ def build_country_stats(spark):
         .orderBy(col("views").desc())
     )
 
-    output = (
-        PROJECT_ROOT
-        / "data_lake"
-        / "gold"
-        / "country_stats"
-    )
+    output = GOLD_DIR / "country_stats"
 
     result.write.mode("overwrite").parquet(str(output))
 

@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import rand
+from pyspark.sql.functions import when, col, explode, row_number, desc, lit, least
+from pyspark.sql.window import Window
 from pyspark.ml.feature import StringIndexer
 from pyspark.ml.recommendation import ALS
 
@@ -14,39 +15,18 @@ spark = (
 )
 
 # ==========================================================
-# Load Gold Layer
+# Load Real Interaction Data
 # ==========================================================
+
+interactions = spark.read.parquet(
+    "data_lake/silver/watch_history"
+)
 
 content = spark.read.parquet(
-    "data_lake/gold/top_content"
+    "data_lake/silver/content"
 )
 
-users = spark.read.parquet(
-    "data_lake/gold/user_retention"
-)
-
-# ==========================================================
-# Synthetic User–Movie Interactions
-# ==========================================================
-
-interactions = (
-    users.select("user_id")
-    .crossJoin(
-        content.select(
-            "content_id",
-            "title",
-            "genre",
-            "imdb_rating"
-        )
-    )
-)
-
-# keep dataset manageable
-
-interactions = (
-    interactions
-    .sample(0.02, seed=42)
-)
+print("Interactions:", interactions.count())
 
 # ==========================================================
 # Encode IDs
@@ -66,12 +46,81 @@ interactions = user_indexer.fit(interactions).transform(interactions)
 interactions = item_indexer.fit(interactions).transform(interactions)
 
 # ==========================================================
-# Rating
+# Keep User ID Mapping (for saving results later)
+# ==========================================================
+
+user_mapping = (
+    interactions
+    .select(
+        "userIndex",
+        "user_id"
+    )
+    .dropDuplicates(["userIndex"])
+)
+
+# ==========================================================
+# Keep Item ID Mapping (for joining movie metadata later)
+# ==========================================================
+
+item_index_mapping = (
+    interactions
+    .select("itemIndex", "content_id")
+    .dropDuplicates(["itemIndex"])
+)
+
+item_mapping = (
+    item_index_mapping
+    .join(
+        content.select("content_id", "title", "genre"),
+        on="content_id",
+        how="left"
+    )
+)
+
+# ==========================================================
+# Real Rating (derived from actual watch behavior)
 # ==========================================================
 
 interactions = interactions.withColumn(
     "rating",
-    interactions.imdb_rating + rand(seed=42)
+    (
+        col("completion_pct") * 0.5
+        +
+        (least(col("watch_minutes"), lit(180)) / 180.0) * 20
+    )
+)
+
+interactions = interactions.withColumn(
+    "rating",
+    when(col("liked") == "Yes", col("rating") + 10)
+    .otherwise(col("rating"))
+)
+
+interactions = interactions.withColumn(
+    "rating",
+    when(col("completed") == "Yes", col("rating") + 10)
+    .otherwise(col("rating"))
+)
+
+interactions = interactions.withColumn(
+    "rating",
+    when(col("binge_watch") == "Yes", col("rating") + 10)
+    .otherwise(col("rating"))
+)
+
+interactions = interactions.withColumn(
+    "rating",
+    when(col("rating") > 100, lit(100))
+    .otherwise(col("rating"))
+)
+
+# ==========================================================
+# Keep Watched Content (to filter out later)
+# ==========================================================
+
+already_watched = interactions.select(
+    "userIndex",
+    "itemIndex"
 )
 
 # ==========================================================
@@ -92,31 +141,14 @@ als = ALS(
 model = als.fit(interactions)
 
 # ==========================================================
-# Recommendations
+# Recommend Top 100 (before filtering)
 # ==========================================================
 
-recommendations = model.recommendForAllUsers(10)
-
-# ==========================================================
-# Item Mapping
-# ==========================================================
-
-item_mapping = (
-    interactions
-    .select(
-        "itemIndex",
-        "content_id",
-        "title",
-        "genre"
-    )
-    .dropDuplicates(["itemIndex"])
-)
+recommendations = model.recommendForAllUsers(100)
 
 # ==========================================================
 # Explode Recommendations
 # ==========================================================
-
-from pyspark.sql.functions import explode
 
 recommendations = recommendations.withColumn(
     "recommendation",
@@ -130,7 +162,36 @@ recommendations = recommendations.select(
 )
 
 # ==========================================================
-# Join Movie Information
+# Remove Already Watched Content
+# ==========================================================
+
+recommendations = (
+    recommendations.join(
+        already_watched,
+        on=["userIndex", "itemIndex"],
+        how="left_anti"
+    )
+)
+
+# ==========================================================
+# Rank Per User, Keep Best 10
+# ==========================================================
+
+window = Window.partitionBy("userIndex").orderBy(
+    desc("PredictedRating")
+)
+
+recommendations = (
+    recommendations
+    .withColumn(
+        "recommendation_rank",
+        row_number().over(window)
+    )
+    .filter(col("recommendation_rank") <= 10)
+)
+
+# ==========================================================
+# Join Movie Metadata
 # ==========================================================
 
 recommendations = (
@@ -141,6 +202,40 @@ recommendations = (
         how="left"
     )
 )
+
+# ==========================================================
+# Join User IDs
+# ==========================================================
+
+recommendations = (
+    recommendations.join(
+        user_mapping,
+        on="userIndex",
+        how="left"
+    )
+)
+
+# ==========================================================
+# Keep Only Useful Columns (in rank order)
+# ==========================================================
+
+recommendations = recommendations.select(
+    "user_id",
+    "content_id",
+    "title",
+    "genre",
+    "PredictedRating",
+    "recommendation_rank"
+)
+
+# ==========================================================
+# Runtime Verification
+# ==========================================================
+
+print()
+print("Users :", recommendations.select("user_id").distinct().count())
+print("Recommendations :", recommendations.count())
+recommendations.show(20, truncate=False)
 
 # ==========================================================
 # Save Recommendations

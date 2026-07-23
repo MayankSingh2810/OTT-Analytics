@@ -1,7 +1,69 @@
+import pandas as pd
 import plotly.express as px
 import streamlit as st
-import pandas as pd
 
+
+BACKGROUND = "#0f172a"
+ACCENT = "#38bdf8"
+
+
+def _style(fig, title):
+
+    fig.update_layout(
+
+        title=dict(
+            text=title,
+            x=0.02,
+            font=dict(
+                size=20,
+                color="white"
+            )
+        ),
+
+        height=380,
+
+        paper_bgcolor=BACKGROUND,
+        plot_bgcolor=BACKGROUND,
+
+        margin=dict(
+            l=20,
+            r=20,
+            t=55,
+            b=20
+        ),
+
+        font=dict(
+            family="Inter",
+            size=14,
+            color="#e2e8f0"
+        ),
+
+        hovermode="x unified",
+
+        legend=dict(
+            orientation="h",
+            y=1.08,
+            x=0,
+            font=dict(size=12)
+        ),
+
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False
+        ),
+
+        yaxis=dict(
+            gridcolor="#334155",
+            zeroline=False
+        )
+    )
+
+    return fig
+
+
+# ==========================================================
+# Line Chart
+# ==========================================================
 
 def line_chart(df, x, y, title=""):
 
@@ -9,18 +71,16 @@ def line_chart(df, x, y, title=""):
         df,
         x=x,
         y=y,
-        title=title,
         markers=True,
-        template="plotly_dark",
+        template="plotly_dark"
     )
 
-    fig.update_layout(
-        height=380,
-        paper_bgcolor="#0d1117",
-        plot_bgcolor="#0d1117",
-        margin=dict(l=20, r=20, t=40, b=20),
-        showlegend=False
+    fig.update_traces(
+        line=dict(width=3, color=ACCENT),
+        marker=dict(size=7, color=ACCENT)
     )
+
+    fig = _style(fig, title)
 
     st.plotly_chart(
         fig,
@@ -28,7 +88,11 @@ def line_chart(df, x, y, title=""):
     )
 
 
-def bar_chart(df, x, y, title):
+# ==========================================================
+# Bar Chart
+# ==========================================================
+
+def bar_chart(df, x, y, title=""):
 
     if isinstance(df, dict):
         df = pd.DataFrame(df)
@@ -37,21 +101,27 @@ def bar_chart(df, x, y, title):
         df,
         x=x,
         y=y,
-        title=title,
         template="plotly_dark"
     )
 
-    fig.update_layout(
-        height=380,
-        paper_bgcolor="#0d1117",
-        plot_bgcolor="#0d1117"
+    fig.update_traces(
+        marker=dict(color=ACCENT),
+        marker_line_width=0
     )
+
+    fig = _style(fig, title)
 
     st.plotly_chart(
         fig,
         use_container_width=True
     )
-def pie_chart(df, names, values, title):
+
+
+# ==========================================================
+# Pie Chart
+# ==========================================================
+
+def pie_chart(df, names, values, title=""):
 
     if isinstance(df, dict):
         df = pd.DataFrame(df)
@@ -60,16 +130,16 @@ def pie_chart(df, names, values, title):
         df,
         names=names,
         values=values,
-        hole=0.55,
-        title=title,
+        hole=0.62,
         template="plotly_dark"
     )
 
-    fig.update_layout(
-        height=380,
-        paper_bgcolor="#0d1117",
-        plot_bgcolor="#0d1117"
+    fig.update_traces(
+        textposition="inside",
+        textinfo="percent+label"
     )
+
+    fig = _style(fig, title)
 
     st.plotly_chart(
         fig,

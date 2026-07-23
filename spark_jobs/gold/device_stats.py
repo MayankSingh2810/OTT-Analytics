@@ -1,3 +1,7 @@
+from pyspark.sql import functions as F
+from config import SILVER_DIR, GOLD_DIR
+
+
 def build_device_stats(spark):
 
     print("=" * 70)
@@ -9,7 +13,7 @@ def build_device_stats(spark):
     # ----------------------------------------------------
 
     watch = spark.read.parquet(
-        str(SILVER / "watch_history")
+        str(SILVER_DIR / "watch_history")
     )
 
     # ----------------------------------------------------
@@ -17,7 +21,7 @@ def build_device_stats(spark):
     # ----------------------------------------------------
 
     live = spark.read.parquet(
-        str(SILVER / "live_events")
+        str(SILVER_DIR / "live_events")
     )
 
     # Convert live events to historical schema
@@ -86,11 +90,13 @@ def build_device_stats(spark):
 
     )
 
+    output = GOLD_DIR / "device_stats"
+
     result.write.mode("overwrite").parquet(
-        str(GOLD)
+        str(output)
     )
 
     print(f"Rows : {result.count():,}")
-    print(f"Saved : {GOLD}")
+    print(f"Saved : {output}")
 
     return result

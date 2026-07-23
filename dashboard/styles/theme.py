@@ -7,23 +7,27 @@ def apply_theme():
         """
 <style>
 
+/* ==========================================================
+GLOBAL
+========================================================== */
+
 html, body, [class*="css"]{
-
     font-family:Inter,sans-serif;
-
 }
 
 .stApp{
-
-    background:#0d1117;
-
+    background:#0B1220;
 }
+
+/* ==========================================================
+PAGE
+========================================================== */
 
 .block-container{
 
-    max-width:1500px;
+    max-width:1550px;
 
-    padding-top:1.2rem;
+    padding-top:1.4rem;
 
     padding-left:2rem;
 
@@ -31,21 +35,39 @@ html, body, [class*="css"]{
 
 }
 
+/* ==========================================================
+SIDEBAR
+========================================================== */
+
 section[data-testid="stSidebar"]{
 
-    background:#111827;
+    background:#0F172A;
 
-    border-right:1px solid #1f2937;
+    border-right:1px solid rgba(56,189,248,.15);
+
+    width:310px !important;
 
 }
 
+/* Sidebar text */
+
+section[data-testid="stSidebar"] *{
+
+    color:white !important;
+
+}
+
+/* ==========================================================
+HEADINGS
+========================================================== */
+
 h1{
+
+    color:white;
 
     font-size:42px;
 
-    font-weight:700;
-
-    color:white;
+    font-weight:800;
 
 }
 
@@ -57,39 +79,116 @@ h2{
 
 h3{
 
+    color:#E2E8F0;
+
+}
+
+/* ==========================================================
+METRIC CARDS
+========================================================== */
+
+div[data-testid="metric-container"]{
+
+    background:#151D2A;
+
+    border-radius:18px;
+
+    border:1px solid rgba(56,189,248,.18);
+
+    padding:20px;
+
+    box-shadow:
+        0 10px 28px rgba(0,0,0,.35);
+
+}
+
+/* ==========================================================
+DATAFRAMES
+========================================================== */
+
+div[data-testid="stDataFrame"]{
+
+    border-radius:18px;
+
+    border:1px solid rgba(56,189,248,.12);
+
+    overflow:hidden;
+
+}
+
+/* ==========================================================
+SUCCESS / INFO
+========================================================== */
+
+div[data-baseweb="notification"]{
+
+    border-radius:16px;
+
+}
+
+/* ==========================================================
+BUTTONS
+========================================================== */
+
+.stButton>button{
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#38BDF8;
+
+    color:white;
+
+    font-weight:600;
+
+}
+
+.stButton>button:hover{
+
+    background:#0EA5E9;
+
     color:white;
 
 }
 
-div[data-testid="stMetric"]{
-
-    background:#161b22;
-
-    border:1px solid #2d333b;
-
-    border-radius:18px;
-
-    padding:20px;
-
-}
-
-div[data-testid="metric-container"]{
-
-    background:#161b22;
-
-    border-radius:18px;
-
-    border:1px solid #2d333b;
-
-    padding:18px;
-
-}
+/* ==========================================================
+DIVIDERS
+========================================================== */
 
 hr{
 
-    margin-top:25px;
+    margin-top:28px;
 
-    margin-bottom:25px;
+    margin-bottom:28px;
+
+    border:none;
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+}
+
+/* ==========================================================
+SCROLLBAR
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#334155;
+
+    border-radius:10px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0B1220;
 
 }
 

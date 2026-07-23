@@ -8,7 +8,17 @@ from components.charts import bar_chart
 def show():
 
     st.title("👥 User Analytics")
-    st.caption("Customer Retention & Audience Intelligence")
+    st.caption("Enterprise Audience Behavior Dashboard")
+
+    st.info(
+        """
+### Audience Intelligence
+
+Analyze subscriber activity, engagement patterns,
+retention trends and user demographics to understand
+customer behaviour across the OTT platform.
+"""
+    )
 
     retention = load_table("user_retention")
     daily = load_table("daily_active_users")
@@ -42,47 +52,47 @@ def show():
 
         if not dashboard.empty and "unique_users" in dashboard.columns:
             metric_card(
-                "Registered Users",
+                "👥 Registered Subscribers",
                 f"{int(dashboard['unique_users'].iloc[0]):,}"
             )
         else:
-            metric_card("Registered Users", f"{len(retention):,}")
+            metric_card("👥 Registered Subscribers", f"{len(retention):,}")
 
     with c2:
 
         if "total_sessions" in retention.columns:
             metric_card(
-                "Average Sessions",
+                "🎬 Average Sessions",
                 f"{retention['total_sessions'].mean():.1f}"
             )
         else:
-            metric_card("Average Sessions", "N/A")
+            metric_card("🎬 Average Sessions", "N/A")
 
     with c3:
 
         if "avg_watch_minutes" in retention.columns:
             metric_card(
-                "Average Watch Time",
+                "⏱ Average Watch Time",
                 f"{retention['avg_watch_minutes'].mean():.1f} min"
             )
         else:
-            metric_card("Average Watch Time", "N/A")
+            metric_card("⏱ Average Watch Time", "N/A")
 
     with c4:
 
         if "days_inactive" in retention.columns:
             metric_card(
-                "Inactive Days",
+                "😴 Average Inactive Days",
                 f"{retention['days_inactive'].mean():.1f}"
             )
         else:
-            metric_card("Inactive Days", "N/A")
+            metric_card("😴 Average Inactive Days", "N/A")
 
     st.divider()
 
     if {"country"}.issubset(retention.columns):
 
-        st.subheader("Users by Country")
+        st.subheader("🌍 Subscriber Distribution")
 
         country = (
             retention.groupby("country")
@@ -95,14 +105,14 @@ def show():
             country,
             "country",
             "users",
-            "Users by Country"
+            "Subscriber Distribution"
         )
 
     st.divider()
 
     if {"age_group"}.issubset(retention.columns):
 
-        st.subheader("Age Distribution")
+        st.subheader("📊 Audience Age Distribution")
 
         age = (
             retention.groupby("age_group")
@@ -110,30 +120,35 @@ def show():
             .reset_index(name="users")
         )
 
+        age["age_group"] = age["age_group"].astype(str)
+
+        age = age.sort_values("age_group")
+
         bar_chart(
             age,
             "age_group",
             "users",
-            "Age Distribution"
+            "Audience Age Distribution"
         )
 
     st.divider()
 
     if {"membership_years"}.issubset(retention.columns):
 
-        st.subheader("Membership Duration")
+        st.subheader("📅 Membership Tenure")
 
         membership = (
             retention.groupby("membership_years")
             .size()
             .reset_index(name="users")
+            .sort_values("membership_years")
         )
 
         bar_chart(
             membership,
             "membership_years",
             "users",
-            "Membership Duration"
+            "Membership Tenure"
         )
 
     st.divider()
@@ -149,17 +164,19 @@ def show():
 
         inactive = 100 - active
 
-        col1, col2 = st.columns(2)
+        left, right = st.columns(2)
 
-        col1.metric(
-            "Active Accounts",
-            f"{active:.1f}%"
-        )
+        with left:
+            metric_card(
+                "🟢 Active Subscribers",
+                f"{active:.1f}%"
+            )
 
-        col2.metric(
-            "Inactive Accounts",
-            f"{inactive:.1f}%"
-        )
+        with right:
+            metric_card(
+                "🔴 Inactive Subscribers",
+                f"{inactive:.1f}%"
+            )
 
     st.divider()
 
@@ -167,18 +184,52 @@ def show():
 
         st.subheader("Daily Active Users")
 
-        st.dataframe(
-            daily,
-            use_container_width=True
-        )
+        with st.container(border=True):
+            st.dataframe(
+                daily,
+                use_container_width=True,
+                height=320
+            )
 
     if not monthly.empty:
 
         st.subheader("Monthly Active Users")
 
-        st.dataframe(
-            monthly,
-            use_container_width=True
-        )
+        with st.container(border=True):
+            st.dataframe(
+                monthly,
+                use_container_width=True,
+                height=320
+            )
 
-    st.success("✅ User Analytics Loaded Successfully")
+    st.divider()
+
+    st.subheader("🧠 Audience Insights")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        if "avg_watch_minutes" in retention.columns:
+            st.info(
+                f"""
+Average Watch Time
+
+**{retention['avg_watch_minutes'].mean():.1f} minutes**
+
+Average watch time indicates sustained user engagement across the platform.
+"""
+            )
+
+    with c2:
+
+        if "days_inactive" in retention.columns:
+            st.info(
+                f"""
+Average Inactivity
+
+**{retention['days_inactive'].mean():.1f} days**
+
+Subscribers with prolonged inactivity represent the highest retention risk.
+"""
+            )

@@ -1,63 +1,74 @@
 import streamlit as st
 
 
+# ==========================================================
+# Executive AI Insights
+# ==========================================================
+
 def executive_insights(row):
 
-    st.subheader("🧠 Executive AI Insights")
+    st.subheader("🧠 Executive Intelligence")
 
-    c1, c2 = st.columns(2)
+    st.success(
+        f"""
+**User Engagement**
 
-    with c1:
+Average watch time is **{row['avg_watch_minutes']:.2f} minutes** per session.
 
-        st.info(
-            f"""
-Average Watch Time
-
-{row['avg_watch_minutes']:.2f} minutes
-
-Users spend considerable time on the platform.
+This indicates healthy user engagement across the platform.
 """
-        )
+    )
 
-        st.info(
-            f"""
-Completion Rate
+    st.success(
+        f"""
+**Content Retention**
 
-{row['completion_rate']*100:.2f}%
+Content completion rate is **{row['completion_rate']*100:.2f}%**.
 
-Content completion is healthy.
+Most users finish the content they begin watching.
 """
-        )
+    )
 
-    with c2:
+    st.success(
+        f"""
+**Viewer Satisfaction**
 
-        st.info(
-            f"""
-Like Rate
+Like rate currently stands at **{row['like_rate']*100:.2f}%**.
 
-{row['like_rate']*100:.2f}%
-
-Positive engagement remains strong.
+Recommendation quality and content relevance remain strong.
 """
-        )
+    )
 
-        st.info(
-            f"""
-Binge Watch Rate
+    st.success(
+        f"""
+**Binge Watching Behaviour**
 
-{row['binge_watch_rate']*100:.2f}%
+Binge-watch rate is **{row['binge_watch_rate']*100:.2f}%**.
 
-Excellent binge consumption.
+Users continue watching multiple episodes in a single session,
+indicating strong long-form engagement.
 """
-        )
+    )
+
+
+# ==========================================================
+# Pipeline Status
+# ==========================================================
 
 def pipeline_status():
 
     st.subheader("🚀 Platform Health")
 
-    c1, c2, c3, c4 = st.columns(4)
+    st.success("🟢 Bronze Layer — Operational")
 
-    c1.success("Bronze ✓")
-    c2.success("Silver ✓")
-    c3.success("Gold ✓")
-    c4.success("Streaming ✓")
+    st.success("🟢 Silver Layer — Operational")
+
+    st.success("🟢 Gold Layer — Operational")
+
+    st.success("🟢 Feature Store — Operational")
+
+    st.success("🟢 Machine Learning Pipeline — Operational")
+
+    st.success("🟢 Recommendation Engine — Operational")
+
+    st.success("🟢 Forecasting Engine — Operational")

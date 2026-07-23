@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 from utils.live_data import load_table
 from utils.ml_loader import (
@@ -19,6 +18,16 @@ def show():
     st.title("🤖 Machine Learning Intelligence Center")
     st.caption(
         "Enterprise AI Platform • Spark MLlib • Churn Prediction • Recommendation Engine • Forecasting"
+    )
+
+    st.info(
+        """
+### AI Intelligence Overview
+
+Monitor production machine learning models, customer churn prediction,
+recommendation quality, forecasting accuracy, and enterprise AI pipeline
+health from a single executive dashboard.
+"""
     )
 
     # ==========================================================
@@ -44,35 +53,35 @@ def show():
     # EXECUTIVE KPI CARDS
     # ==========================================================
 
-    st.subheader("Production Machine Learning Models")
+    st.subheader("🚀 Production AI Models")
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         metric_card(
-            "Training Samples",
+            "📚 Training Records",
             f"{rf_metrics['training_rows']:,}"
         )
 
     with c2:
         metric_card(
-            "Testing Samples",
+            "🧪 Testing Records",
             f"{rf_metrics['testing_rows']:,}"
         )
 
     with c3:
         metric_card(
-            "Random Forest AUC",
+            "🌲 Random Forest AUC",
             f"{rf_metrics['auc']*100:.2f}%"
         )
 
     with c4:
         metric_card(
-            "Gradient Boosted AUC",
+            "⚡ Gradient Boosted AUC",
             f"{gbt_metrics['auc']*100:.2f}%"
         )
 
-    st.divider()  
+    st.divider()
 
     # ==========================================================
     # MODEL COMPARISON
@@ -132,7 +141,9 @@ def show():
 
             coloraxis_showscale=False,
 
-            yaxis=dict(range=[0.99, 1.0])
+            title="Production Model Performance",
+
+            yaxis_title="ROC-AUC Score"
 
         )
 
@@ -146,7 +157,7 @@ def show():
 
     with right:
 
-        st.success("### Best Production Model")
+        st.success("🏆 Best Production Model")
 
         st.metric(
 
@@ -166,7 +177,7 @@ def show():
 
         st.metric(
 
-            "Training Rows",
+            "Training Records",
 
             f"{rf_metrics['training_rows']:,}"
 
@@ -174,10 +185,14 @@ def show():
 
         st.metric(
 
-            "Pipeline",
+            "Inference Status",
 
-            "Healthy"
+            "Production Ready"
 
+        )
+
+        st.caption(
+            "Random Forest currently delivers the highest ROC-AUC and is deployed as the production churn model."
         )
 
     st.divider()
@@ -186,7 +201,7 @@ def show():
     # CHURN RISK ANALYSIS
     # ==========================================================
 
-    st.subheader("Customer Churn Intelligence")
+    st.subheader("📉 Customer Churn Intelligence")
 
     churn["Risk"] = pd.cut(
 
@@ -276,22 +291,22 @@ def show():
         low_risk = len(churn) - high_risk
 
         st.metric(
-            "High Risk Users",
+            "🔴 High Risk",
             f"{high_risk:,}"
         )
 
         st.metric(
-            "Medium Risk Users",
+            "🟡 Medium Risk",
             f"{medium_risk:,}"
         )
 
         st.metric(
-            "Low Risk Users",
+            "🟢 Low Risk",
             f"{low_risk:,}"
         )
 
         st.metric(
-            "Average Inactive Days",
+            "📅 Avg Inactive Days",
             f"{churn['days_inactive'].mean():.1f}"
         )
 
@@ -301,7 +316,7 @@ def show():
     # HIGH RISK USERS
     # ==========================================================
 
-    st.subheader("Highest Risk Subscribers")
+    st.subheader("🚨 Highest Churn Risk Subscribers")
 
     risk_users = (
 
@@ -414,11 +429,43 @@ def show():
 
             "Recommendation Model",
 
-            "ALS"
+            "ALS Collaborative Filtering"
 
         )
 
-        st.success("Recommendation Engine Online")
+        st.success("🟢 Production Recommendation Engine Active")
+
+    st.divider()
+
+    # ==========================================================
+    # AI SUMMARY
+    # ==========================================================
+
+    st.subheader("🧠 Executive AI Summary")
+
+    left, right = st.columns(2)
+
+    with left:
+
+        st.info(
+            f"""
+Production Churn Model
+
+**{comparison['Winner']['Best Model']}**
+
+Random Forest currently delivers the highest prediction accuracy and has been selected as the production churn model.
+"""
+        )
+
+    with right:
+
+        st.info(
+            f"""
+Recommendation Engine
+
+ALS Collaborative Filtering continuously generates personalized recommendations across the entire subscriber base.
+"""
+        )
 
     st.divider()
 
@@ -426,75 +473,67 @@ def show():
     # ARIMA FORECAST
     # ==========================================================
 
-    st.subheader("📈 Daily Active Users Forecast (ARIMA)")
+    st.subheader("📈 Business Forecasting (ARIMA)")
+
+    st.caption(
+        "Forecast of Daily Active Users and Watch Hours generated using the ARIMA time-series model."
+    )
 
     forecast = forecast_df.copy()
 
     forecast["Day"] = forecast["Day"].astype(str)
 
-    fig = go.Figure()
-
-    fig.add_trace(
-
-        go.Scatter(
-
-            x=forecast["Day"],
-
-            y=forecast["Forecast_DAU"],
-
-            mode="lines+markers",
-
-            name="Forecast DAU"
-
-        )
-
-    )
-
-    fig.add_trace(
-
-        go.Scatter(
-
-            x=forecast["Day"],
-
-            y=forecast["Forecast_Watch_Hours"],
-
-            mode="lines+markers",
-
-            name="Forecast Watch Hours"
-
-        )
-
+    fig = px.line(
+        forecast,
+        x="Day",
+        y="Forecast_DAU",
+        markers=True,
+        template="plotly_dark"
     )
 
     fig.update_layout(
-
-        template="plotly_dark",
-
         height=430,
-
         paper_bgcolor="#0d1117",
-
         plot_bgcolor="#0d1117",
-
         xaxis_title="Forecast Day",
-
-        yaxis_title="Forecast Value"
-
+        yaxis_title="Forecast DAU"
     )
 
     st.plotly_chart(
-
         fig,
-
         use_container_width=True
-
     )
 
-    st.subheader("Forecast Dataset")
+    st.subheader("Forecast Watch Hours")
+
+    fig2 = px.line(
+        forecast,
+        x="Day",
+        y="Forecast_Watch_Hours",
+        markers=True,
+        template="plotly_dark"
+    )
+
+    fig2.update_layout(
+        height=250,
+        paper_bgcolor="#0d1117",
+        plot_bgcolor="#0d1117",
+        xaxis_title="Forecast Day",
+        yaxis_title="Forecast Watch Hours"
+    )
+
+    st.plotly_chart(
+        fig2,
+        use_container_width=True
+    )
+
+    st.subheader("Forecast Output")
+
+    forecast_display = forecast.round(2)
 
     st.dataframe(
 
-        forecast,
+        forecast_display,
 
         use_container_width=True,
 
@@ -503,12 +542,12 @@ def show():
     )
 
     st.divider()
-    
+
     # ==========================================================
     # MODEL DETAILS
     # ==========================================================
 
-    st.subheader("🌲 Production Model Details")
+    st.subheader("🧾 Model Configuration")
 
     left, right = st.columns(2)
 
@@ -536,7 +575,7 @@ def show():
 
         })
 
-        st.markdown("### Random Forest")
+        st.markdown("### 🌲 Random Forest")
 
         st.dataframe(
             rf_df,
@@ -568,7 +607,7 @@ def show():
 
         })
 
-        st.markdown("### Gradient Boosted Trees")
+        st.markdown("### ⚡ Gradient Boosted Trees")
 
         st.dataframe(
             gbt_df,
@@ -582,11 +621,11 @@ def show():
     # MODEL HEALTH
     # ==========================================================
 
-    st.subheader("📊 Production Model Health")
+    st.subheader("📊 AI Platform Health")
 
     health = pd.DataFrame({
 
-        "Model":[
+        "Model": [
 
             "Random Forest",
             "Gradient Boosted Trees",
@@ -595,7 +634,7 @@ def show():
 
         ],
 
-        "Health":[
+        "Health Score": [
 
             rf_metrics["auc"] * 100,
 
@@ -615,11 +654,11 @@ def show():
 
         x="Model",
 
-        y="Health",
+        y="Health Score",
 
-        color="Health",
+        color="Health Score",
 
-        text="Health",
+        text="Health Score",
 
         template="plotly_dark"
 
@@ -658,7 +697,7 @@ def show():
     # PIPELINE STATUS
     # ==========================================================
 
-    st.subheader("⚙ Production AI Pipeline")
+    st.subheader("⚙ AI Pipeline Status")
 
     pipeline = pd.DataFrame({
 
@@ -671,19 +710,19 @@ def show():
             "Gradient Boosted Trees",
             "ALS Recommendation",
             "ARIMA Forecast",
-            "Prediction API"
+            "Serving Layer"
         ],
 
         "Status": [
-            "Running",
-            "Running",
-            "Running",
             "Healthy",
-            "Completed",
-            "Completed",
-            "Online",
-            "Online",
-            "Live"
+            "Healthy",
+            "Healthy",
+            "Healthy",
+            "Healthy",
+            "Healthy",
+            "Healthy",
+            "Healthy",
+            "Healthy"
         ]
 
     })
@@ -716,45 +755,49 @@ def show():
 
     with col1:
 
-        st.markdown(f"""
-### 📌 AI Business Insights
+        with st.container(border=True):
 
-- **Best Production Model:** {comparison['Winner']['Best Model']}
-- **Highest AUC:** {comparison['Winner']['Best AUC']:.6f}
-- **Average Watch Time:** {avg_watch:.1f} Minutes
-- **Average Completion:** {avg_completion:.2f}%
-- **High Risk Customers:** {risk_percentage:.2f}%
-- **Recommendation Engine:** ALS Collaborative Filtering
-- **Forecasting:** ARIMA
-""")
+            st.markdown("#### 🏆 Production Model")
+
+            st.metric(
+                "Model",
+                comparison['Winner']['Best Model']
+            )
+
+            st.metric(
+                "ROC-AUC",
+                f"{comparison['Winner']['Best AUC']*100:.2f}%"
+            )
+
+            st.metric(
+                "High Risk Customers",
+                f"{risk_percentage:.2f}%"
+            )
 
     with col2:
 
-        executive = pd.DataFrame({
+        with st.container(border=True):
 
-            "Category": [
-                "Prediction Accuracy",
-                "Recommendation Quality",
-                "Forecast Reliability",
-                "Pipeline Health",
-                "Model Availability"
-            ],
+            st.markdown("#### 🚀 AI Platform")
 
-            "Status": [
-                "Excellent",
-                "Excellent",
-                "Very Good",
-                "Healthy",
-                "100%"
-            ]
+            st.metric(
+                "Recommendation Engine",
+                "ALS"
+            )
 
-        })
+            st.metric(
+                "Forecasting",
+                "ARIMA"
+            )
 
-        st.dataframe(
-            executive,
-            hide_index=True,
-            use_container_width=True
-        )
+            st.metric(
+                "Pipeline Status",
+                "Healthy"
+            )
+
+            st.caption(
+                f"Average Watch Time: {avg_watch:.1f} min • Average Completion: {avg_completion:.2f}%"
+            )
 
     st.divider()
 
@@ -762,9 +805,7 @@ def show():
     # ALS RECOMMENDATION ENGINE
     # ==========================================================
 
-    st.divider()
-
-    st.subheader("🎬 AI Content Recommendations")
+    st.subheader("🎬 Personalized Recommendations")
 
     from utils.ml_loader import load_als_recommendations
 
@@ -776,7 +817,9 @@ def show():
 
     else:
 
-        st.caption("Top recommendations generated using Spark MLlib ALS")
+        st.caption(
+            "Recommendations generated using Apache Spark MLlib ALS Collaborative Filtering."
+        )
 
         display = recommended[
         [
@@ -808,3 +851,9 @@ def show():
         st.success(
         f"⭐ Top Recommendation: **{best['Title']}** ({best['Genre']}) • Predicted Rating: **{best['Predicted Rating']}**"
         )
+
+    st.markdown("---")
+
+    st.caption(
+        "Powered by Apache Spark • PySpark • Spark MLlib • Random Forest • Gradient Boosted Trees • ALS • ARIMA"
+    )

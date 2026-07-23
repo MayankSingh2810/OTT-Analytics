@@ -49,24 +49,15 @@ TABLES = {
     "popular_content": "popular_content",
     "event_stats": "event_stats",
     "churn_features": "churn_features",
-    
+
 }
 
 
 def load_table(name):
 
     if name not in TABLES:
-        print("Unknown table:", name)
         return pd.DataFrame()
 
     query = f"SELECT * FROM {TABLES[name]}"
-    print(query)
 
-    df = pd.read_sql(query, engine)
-
-    print("Loaded:", TABLES[name])
-    print(df.shape)
-    print(df.head())
-    print(df.columns.tolist())
-
-    return df
+    return pd.read_sql(query, engine)

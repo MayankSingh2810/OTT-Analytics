@@ -3,6 +3,7 @@ import plotly.express as px
 
 from utils.live_data import load_table
 from components.cards import metric_card
+from components.charts import style_fig
 
 
 def show():
@@ -39,30 +40,44 @@ def show():
             if col in df.columns:
                 df[col] = df[col].astype(float)
 
+    # Sort genre by total_views (highest to lowest) so it's consistent everywhere
+    if "total_views" in genre.columns:
+        genre = genre.sort_values("total_views", ascending=False)
+
+    st.info(
+        """
+### Content Intelligence
+
+Monitor genre popularity, viewing behaviour,
+content performance and audience engagement
+across the OTT platform.
+"""
+    )
+
     st.subheader("Content Overview")
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        metric_card("Titles", f"{len(content):,}")
+        metric_card("Content Catalog", f"{len(content):,}")
 
     with c2:
         if "genre" in genre.columns:
-            metric_card("Genres", f"{genre['genre'].nunique()}")
+            metric_card("Genre Categories", f"{genre['genre'].nunique()}")
         else:
-            metric_card("Genres", "N/A")
+            metric_card("Genre Categories", "N/A")
 
     with c3:
         if "views" in top.columns:
-            metric_card("Total Views", f"{int(top['views'].sum()):,}")
+            metric_card("Total Platform Views", f"{int(top['views'].sum()):,}")
         else:
-            metric_card("Total Views", "N/A")
+            metric_card("Total Platform Views", "N/A")
 
     with c4:
         if "avg_rating" in content.columns:
-            metric_card("Average Rating", f"{content['avg_rating'].mean():.2f}")
+            metric_card("Average IMDb Rating", f"{content['avg_rating'].mean():.2f}")
         else:
-            metric_card("Average Rating", "N/A")
+            metric_card("Average IMDb Rating", "N/A")
 
     st.divider()
 
@@ -79,8 +94,10 @@ def show():
                 x="genre",
                 y="total_views",
                 color="total_views",
-                template="plotly_dark"
+                template="plotly_white"
             )
+
+            fig = style_fig(fig)
 
             st.plotly_chart(fig, use_container_width=True)
 
@@ -90,13 +107,16 @@ def show():
 
         if {"genre", "avg_imdb_rating"}.issubset(genre.columns):
 
-            fig = px.pie(
-                genre,
-                names="genre",
-                values="avg_imdb_rating",
-                hole=.5,
-                template="plotly_dark"
+            fig = px.bar(
+                genre.sort_values("avg_imdb_rating"),
+                x="avg_imdb_rating",
+                y="genre",
+                orientation="h",
+                color="avg_imdb_rating",
+                template="plotly_white"
             )
+
+            fig = style_fig(fig)
 
             st.plotly_chart(fig, use_container_width=True)
 
@@ -104,21 +124,25 @@ def show():
 
     st.subheader("🔥 Top Content")
 
+    top10 = None
+
     if "views" in top.columns:
 
-        top20 = top.sort_values(
+        top10 = top.sort_values(
             "views",
             ascending=False
-        ).head(20)
+        ).head(10)
 
         fig = px.bar(
-            top20,
+            top10,
             x="views",
             y="title",
             orientation="h",
             color="views",
-            template="plotly_dark"
+            template="plotly_white"
         )
+
+        fig = style_fig(fig)
 
         st.plotly_chart(
             fig,
@@ -139,8 +163,10 @@ def show():
                 content,
                 x="avg_rating",
                 nbins=20,
-                template="plotly_dark"
+                template="plotly_white"
             )
+
+            fig = style_fig(fig)
 
             st.plotly_chart(
                 fig,
@@ -160,8 +186,14 @@ def show():
                 x="avg_watch_minutes",
                 y="avg_completion",
                 color=color,
-                template="plotly_dark"
+                template="plotly_white"
             )
+
+            fig.update_traces(
+                marker=dict(size=9)
+            )
+
+            fig = style_fig(fig)
 
             st.plotly_chart(
                 fig,
@@ -185,10 +217,39 @@ def show():
         if c in top.columns
     ]
 
-    st.dataframe(
-        top[available],
-        use_container_width=True,
-        height=450
-    )
+    with st.container(border=True):
+        st.dataframe(
+            top[available],
+            use_container_width=True,
+            height=420
+        )
 
-    st.success("✅ Content Analytics Loaded Successfully")
+    st.divider()
+
+    st.subheader("🧠 Content Insights")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        if "genre" in genre.columns and len(genre) > 0:
+            st.info(
+                f"""
+Top Genre
+
+**{genre.iloc[0]['genre']}**
+
+This genre contributes the highest platform engagement.
+"""
+            )
+
+    with c2:
+        if top10 is not None and "title" in top10.columns and len(top10) > 0:
+            st.info(
+                f"""
+Most Watched Title
+
+**{top10.iloc[0]['title']}**
+
+Highest performing content across the platform.
+"""
+            )

@@ -1,11 +1,11 @@
 import streamlit as st
 
-
 def sidebar():
 
-    st.sidebar.title("🎬 OTT Intelligence")
+    st.sidebar.title("🎬 OTT Stream Intelligence")
+    st.sidebar.caption("Enterprise Analytics Platform")
 
-    st.sidebar.markdown("---")
+    st.sidebar.divider()
 
     page = st.sidebar.radio(
         "Navigation",
@@ -19,12 +19,31 @@ def sidebar():
         ]
     )
 
-    st.sidebar.markdown("---")
+    st.sidebar.divider()
 
-    st.sidebar.success("Pipeline Running")
+    st.sidebar.subheader("System Status")
 
-    st.sidebar.caption("Bronze ✓")
-    st.sidebar.caption("Silver ✓")
-    st.sidebar.caption("Gold ✓")
+    st.sidebar.success("🟢 Pipeline Healthy")
+
+    st.sidebar.caption("Last Refresh")
+    st.sidebar.write("Today")
+
+    st.sidebar.divider()
+
+    st.sidebar.subheader("Data Lake")
+
+    st.sidebar.write("🟢 Bronze")
+    st.sidebar.write("🟢 Silver")
+    st.sidebar.write("🟢 Gold")
+    st.sidebar.write("🟢 Feature Store")
+
+    st.sidebar.divider()
+
+    st.sidebar.subheader("Machine Learning")
+
+    st.sidebar.write("✅ Random Forest")
+    st.sidebar.write("✅ Gradient Boosted Trees")
+    st.sidebar.write("✅ ALS Recommendation")
+    st.sidebar.write("✅ ARIMA Forecast")
 
     return page

@@ -20,37 +20,34 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # Load REAL Content IDs
 # =====================================================
 
-# FIX: was pd.read_csv("data/raw/content.csv") -> stale path, folder
-# was renamed to data_lake/raw/. Now reads from the same RAW_DATA_DIR
-# that config.py (and the rest of the pipeline) already uses, so this
-# stays correct even if the folder moves again in the future.
 content_df = pd.read_csv(RAW_DATA_DIR / "content.csv")
 
 CONTENT_IDS = content_df["content_id"].tolist()
 
 print(f"Loaded {len(CONTENT_IDS)} content IDs")
 
+# =====================================================
+# Load REAL User IDs
+# =====================================================
+
+# FIX: the generator was inventing sequential IDs like "USR-000172"
+# that never existed in users.csv (real IDs are UUID-based, e.g.
+# "USR-0010F2AA94884AFB9C78C8541E9B0DB4"). That mismatch is why every
+# live event failed to join to country/subscription/demographics
+# downstream (830 NULL rows in country_stats, churn_features, etc.).
+# Now we load and reuse the actual user_id pool from users.csv.
+
+users_df = pd.read_csv(RAW_DATA_DIR / "users.csv")
+
+USER_IDS = users_df["user_id"].tolist()
+
+print(f"Loaded {len(USER_IDS)} users")
+
 # Bumped back to 150 per checklist. Previously reduced to 75 "until
 # pipeline throughput is verified" -- if that verification hasn't
 # actually happened yet, watch for backpressure/lag downstream.
 EVENTS_PER_SECOND = 150
 MAX_EVENT_FILES = 50000
-
-# =====================================================
-# USER POOL CONFIG
-# =====================================================
-
-# Matches config.py TOTAL_USERS after scale-down
-EXISTING_USER_COUNT = 50000
-
-# Re-enabled per checklist (was 0). Previously disabled because new
-# users generated here don't exist in users.csv / subscriptions.csv /
-# profiles.csv, breaking downstream joins. If that registration
-# pipeline isn't wired up yet, this will reintroduce orphan users.
-NEW_USER_CHANCE = 0.02
-
-# Kept for future use once real registrations are wired in
-new_user_counter = EXISTING_USER_COUNT
 
 # =====================================================
 # MASTER DATA
@@ -115,7 +112,7 @@ EVENTS = [
     "SKIP"
 ]
 
-# Change 3: Event distribution skewed toward PLAY, matching real
+# Event distribution skewed toward PLAY, matching real
 # streaming behavior (users mostly just hit play).
 EVENT_WEIGHTS = [
     55,   # PLAY
@@ -140,13 +137,13 @@ counter = 1
 
 print("=" * 60)
 print("OTT Live Event Generator Started")
-print(f"Events/sec: {EVENTS_PER_SECOND}  |  Existing users: {EXISTING_USER_COUNT}  |  New user chance: {NEW_USER_CHANCE*100:.1f}%")
+print(f"Events/sec: {EVENTS_PER_SECOND}  |  Users: {len(USER_IDS)}")
 print("=" * 60)
 
 
 def generate_watch_seconds():
     """
-    Change 2: Bucketed watch-time distribution so short, medium, long,
+    Bucketed watch-time distribution so short, medium, long,
     and binge sessions occur in realistic proportions instead of a
     flat uniform 30-7200s range.
     """
@@ -164,7 +161,7 @@ def generate_watch_seconds():
 
 def generate_completion(watch_seconds):
     """
-    Change 4: Completion % scaled against a more realistic "typical
+    Completion % scaled against a more realistic "typical
     content length" denominator (5400s ~ 90 min) with noise, clamped
     to [0, 100].
     """
@@ -183,7 +180,7 @@ def generate_completion(watch_seconds):
 def generate_event(counter):
     """Build a single event dict. Pulled out of the loop so it's testable
     and reusable without touching global state beyond SESSIONS."""
-    user = f"USR-{random.randint(1, EXISTING_USER_COUNT):06}"
+    user = random.choice(USER_IDS)
 
     if user not in SESSIONS:
         SESSIONS[user] = str(uuid.uuid4())

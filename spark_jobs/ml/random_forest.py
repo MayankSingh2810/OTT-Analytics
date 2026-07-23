@@ -119,6 +119,21 @@ print("Random Forest AUC :", auc)
 print("=" * 60)
 
 # ==========================================================
+# Feature Importance
+# ==========================================================
+
+print("\nFeature Importance")
+
+for feature, importance in zip(feature_columns, model.featureImportances):
+    print(f"{feature:25} {importance:.4f}")
+
+# ==========================================================
+# Ensure Output Directory Exists
+# ==========================================================
+
+os.makedirs("ml_models/random_forest", exist_ok=True)
+
+# ==========================================================
 # Save Model
 # ==========================================================
 
@@ -127,10 +142,21 @@ model_path = "ml_models/random_forest/model"
 model.write().overwrite().save(model_path)
 
 # ==========================================================
-# Save Metrics
+# Save Predictions
 # ==========================================================
 
-os.makedirs("ml_models/random_forest", exist_ok=True)
+predictions.select(
+    "user_id",
+    "label",
+    "prediction",
+    "probability"
+).write.mode("overwrite").parquet(
+    "ml_models/random_forest/predictions"
+)
+
+# ==========================================================
+# Save Metrics
+# ==========================================================
 
 metrics = {
 
@@ -154,6 +180,24 @@ with open(
 ) as f:
 
     json.dump(metrics, f, indent=4)
+
+# ==========================================================
+# Save Feature Importance
+# ==========================================================
+
+feature_importance = {
+    feature: float(importance)
+    for feature, importance in zip(
+        feature_columns,
+        model.featureImportances
+    )
+}
+
+with open(
+    "ml_models/random_forest/feature_importance.json",
+    "w"
+) as f:
+    json.dump(feature_importance, f, indent=4)
 
 print("Model Saved Successfully")
 

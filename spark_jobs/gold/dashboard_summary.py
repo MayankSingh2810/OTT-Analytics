@@ -47,23 +47,43 @@ def build_dashboard_summary(spark):
 
         live = (
             live
+            .withColumn("watch_id", col("event_id"))
+            .withColumn("watch_start", col("timestamp"))
+            .withColumn("watch_end", col("timestamp"))
             .withColumn("watch_minutes", col("watch_seconds") / 60)
+
             .withColumn(
                 "liked",
                 when(col("event_type") == "LIKE", "Yes").otherwise("No")
             )
+
+            .withColumn(
+                "added_to_watchlist",
+                when(col("event_type") == "ADD_TO_WATCHLIST", "Yes").otherwise("No")
+            )
+
             .withColumn(
                 "completed",
                 when(col("completion_pct") >= 90, "Yes").otherwise("No")
             )
+
+            .withColumn(
+                "recommendation_source",
+                when(col("event_type") == "RECOMMENDATION", "Recommended").otherwise("Direct")
+            )
+
+            .withColumn("engagement_level", col("event_type"))
+
             .withColumn(
                 "binge_watch",
                 when(col("watch_seconds") >= 7200, "Yes").otherwise("No")
             )
+
+            .select(watch.columns)
         )
 
         all_watch = watch.unionByName(
-            live.select(watch.columns),
+            live,
             allowMissingColumns=True
         )
 
