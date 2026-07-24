@@ -7,30 +7,21 @@ BACKGROUND = "#0f172a"
 ACCENT = "#38bdf8"
 
 
-def _style(fig, title):
+def style_fig(fig):
 
     fig.update_layout(
 
-        title=dict(
-            text=title,
-            x=0.02,
-            font=dict(
-                size=20,
-                color="white"
-            )
-        ),
-
-        height=380,
-
-        paper_bgcolor=BACKGROUND,
-        plot_bgcolor=BACKGROUND,
+        height=420,
 
         margin=dict(
             l=20,
             r=20,
-            t=55,
+            t=45,
             b=20
         ),
+
+        paper_bgcolor=BACKGROUND,
+        plot_bgcolor=BACKGROUND,
 
         font=dict(
             family="Inter",
@@ -38,13 +29,14 @@ def _style(fig, title):
             color="#e2e8f0"
         ),
 
+        title_x=0.02,
+
         hovermode="x unified",
 
         legend=dict(
             orientation="h",
             y=1.08,
-            x=0,
-            font=dict(size=12)
+            x=0
         ),
 
         xaxis=dict(
@@ -61,9 +53,37 @@ def _style(fig, title):
     return fig
 
 
-# ==========================================================
-# Line Chart
-# ==========================================================
+def _style(fig, title):
+
+    fig = style_fig(fig)
+
+    fig.update_layout(
+
+        title=dict(
+            text=title,
+            x=0.02,
+            font=dict(
+                size=20,
+                color="white"
+            )
+        ),
+
+        height=380,
+
+        margin=dict(
+            l=20,
+            r=20,
+            t=55,
+            b=20
+        ),
+
+        legend=dict(
+            font=dict(size=12)
+        )
+    )
+
+    return fig
+
 
 def line_chart(df, x, y, title=""):
 
@@ -87,10 +107,6 @@ def line_chart(df, x, y, title=""):
         use_container_width=True
     )
 
-
-# ==========================================================
-# Bar Chart
-# ==========================================================
 
 def bar_chart(df, x, y, title=""):
 
@@ -116,10 +132,6 @@ def bar_chart(df, x, y, title=""):
         use_container_width=True
     )
 
-
-# ==========================================================
-# Pie Chart
-# ==========================================================
 
 def pie_chart(df, names, values, title=""):
 

@@ -8,7 +8,7 @@ from components.charts import style_fig
 
 def show():
 
-    st.title("📺 Content Analytics")
+    st.title("Content Analytics")
     st.caption("Enterprise OTT Content Intelligence")
 
     content = load_table("content")
@@ -18,10 +18,6 @@ def show():
     if content.empty or top.empty or genre.empty:
         st.error("Content tables not found in MySQL.")
         return
-
-    # --------------------------
-    # Fix numeric columns
-    # --------------------------
 
     numeric_cols = [
         "views",
@@ -40,7 +36,6 @@ def show():
             if col in df.columns:
                 df[col] = df[col].astype(float)
 
-    # Sort genre by total_views (highest to lowest) so it's consistent everywhere
     if "total_views" in genre.columns:
         genre = genre.sort_values("total_views", ascending=False)
 
@@ -85,7 +80,7 @@ across the OTT platform.
 
     with left:
 
-        st.subheader("🎭 Views by Genre")
+        st.subheader("Views by Genre")
 
         if {"genre", "total_views"}.issubset(genre.columns):
 
@@ -103,7 +98,7 @@ across the OTT platform.
 
     with right:
 
-        st.subheader("⭐ Average Rating by Genre")
+        st.subheader("Average Rating by Genre")
 
         if {"genre", "avg_imdb_rating"}.issubset(genre.columns):
 
@@ -122,7 +117,7 @@ across the OTT platform.
 
     st.divider()
 
-    st.subheader("🔥 Top Content")
+    st.subheader("Top Content")
 
     top10 = None
 
@@ -226,7 +221,7 @@ across the OTT platform.
 
     st.divider()
 
-    st.subheader("🧠 Content Insights")
+    st.subheader("Content Insights")
 
     c1, c2 = st.columns(2)
 

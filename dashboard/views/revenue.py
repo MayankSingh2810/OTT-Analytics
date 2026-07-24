@@ -8,7 +8,7 @@ from components.charts import pie_chart, bar_chart
 
 def show():
 
-    st.title("💰 Revenue Analytics")
+    st.title("Revenue Analytics")
     st.caption("Enterprise Revenue Performance Dashboard")
 
     st.info(
@@ -28,10 +28,6 @@ and overall business health across the OTT platform.
 
     row = revenue.iloc[0]
 
-    # ---------------------------------------------
-    # Numeric conversion
-    # ---------------------------------------------
-
     numeric = [
         "monthly_revenue",
         "total_subscribers",
@@ -46,43 +42,39 @@ and overall business health across the OTT platform.
 
     row = revenue.iloc[0]
 
-    # ---------------------------------------------
-    # KPI Cards
-    # ---------------------------------------------
-
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
 
         metric_card(
-            "💰 Monthly Revenue",
+            "Monthly Revenue",
             f"${row['monthly_revenue']:,.0f}"
         )
 
     with c2:
 
         metric_card(
-            "👥 Subscribers",
+            "Subscribers",
             f"{int(row['total_subscribers']):,}"
         )
 
     with c3:
 
         metric_card(
-            "🟢 Active Subscribers",
+            "Active Subscribers",
             f"{int(row['active_subscribers']):,}"
         )
 
     with c4:
 
         metric_card(
-            "💳 Avg Plan Price",
+            "Avg Plan Price",
             f"${row['average_plan_price']:.2f}"
         )
 
     st.divider()
 
-    st.subheader("📊 Business Overview")
+    st.subheader("Business Overview")
 
     summary = pd.DataFrame(
         {
@@ -178,20 +170,20 @@ and overall business health across the OTT platform.
     with col1:
 
         st.metric(
-            "🔄 Auto-Renew Rate",
+            "Auto-Renew Rate",
             f"{row['auto_renew_users']/row['total_subscribers']*100:.1f}%"
         )
 
     with col2:
 
         st.metric(
-            "🟢 Active Subscriber Rate",
+            "Active Subscriber Rate",
             f"{row['active_subscribers']/row['total_subscribers']*100:.1f}%"
         )
 
     st.divider()
 
-    st.subheader("📈 Business Health")
+    st.subheader("Business Health")
 
     left, right = st.columns(2)
 
@@ -223,7 +215,7 @@ The majority of subscribers are currently active.
 
     st.divider()
 
-    st.subheader("🧠 Revenue Insights")
+    st.subheader("Revenue Insights")
 
     c1, c2 = st.columns(2)
 
@@ -231,7 +223,7 @@ The majority of subscribers are currently active.
 
         st.info(
             f"""
-💰 Revenue Performance
+Revenue Performance
 
 **${row['monthly_revenue']:,.0f}**
 
@@ -250,7 +242,7 @@ Recurring subscription revenue remains the primary contributor to platform earni
 
         st.info(
             f"""
-🔄 Customer Retention
+Customer Retention
 
 **{renewal:.1f}%**
 

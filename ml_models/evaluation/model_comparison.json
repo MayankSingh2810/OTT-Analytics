@@ -1,19 +1,19 @@
 {
     "Random Forest": {
         "Algorithm": "Spark MLlib Random Forest",
-        "AUC": 0.9352256602288375,
-        "Training Rows": 39674,
-        "Testing Rows": 9982
+        "AUC": 0.9299189043545667,
+        "Training Rows": 39675,
+        "Testing Rows": 9984
     },
     "Gradient Boosted Trees": {
         "Algorithm": "Spark MLlib Gradient Boosted Trees",
-        "AUC": 0.9320200815985838,
-        "Training Rows": 39674,
-        "Testing Rows": 9982
+        "AUC": 0.917065763035141,
+        "Training Rows": 39675,
+        "Testing Rows": 9984
     },
     "Winner": {
         "Best Model": "Random Forest",
-        "Best AUC": 0.9352256602288375,
+        "Best AUC": 0.9299189043545667,
         "Selection Reason": "Highest ROC-AUC"
     }
 }

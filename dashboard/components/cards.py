@@ -12,6 +12,6 @@ def metric_card(title, value, delta=None):
         if delta is not None:
 
             if str(delta).startswith("-"):
-                st.error(f"▼ {delta}")
+                st.error(str(delta))
             else:
-                st.success(f"▲ {delta}")
+                st.success(str(delta))

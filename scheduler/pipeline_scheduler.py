@@ -4,7 +4,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-INTERVAL = 30
+INTERVAL = 60  # Run every 60 seconds
 
 
 def run(name, command):
@@ -19,10 +19,10 @@ def run(name, command):
         shell=True
     )
 
-    if result.returncode != 0:
-        print(f"{name} FAILED")
-    else:
+    if result.returncode == 0:
         print(f"{name} COMPLETED")
+    else:
+        print(f"{name} FAILED")
 
 
 def main():
@@ -39,11 +39,11 @@ def main():
         )
 
         run(
-            "Gold Loader",
+            "Gold MySQL Loader",
             "python -m database.gold_loader"
         )
 
-        print(f"\nSleeping {INTERVAL} seconds...\n")
+        print(f"\nWaiting {INTERVAL} seconds before next refresh...\n")
 
         time.sleep(INTERVAL)
 

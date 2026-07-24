@@ -15,24 +15,10 @@ from components.cards import metric_card
 
 def show():
 
-    st.title("🤖 Machine Learning Intelligence Center")
+    st.title("Machine Learning Intelligence Center")
     st.caption(
-        "Enterprise AI Platform • Spark MLlib • Churn Prediction • Recommendation Engine • Forecasting"
+        "Enterprise AI Platform | Spark MLlib | Churn Prediction | Recommendation Engine | Forecasting"
     )
-
-    st.info(
-        """
-### AI Intelligence Overview
-
-Monitor production machine learning models, customer churn prediction,
-recommendation quality, forecasting accuracy, and enterprise AI pipeline
-health from a single executive dashboard.
-"""
-    )
-
-    # ==========================================================
-    # LOAD DATA
-    # ==========================================================
 
     churn = load_table("churn_features")
     dashboard = load_table("dashboard_summary")
@@ -49,43 +35,35 @@ health from a single executive dashboard.
     comparison = load_model_comparison()
     forecast_df = load_forecast()
 
-    # ==========================================================
-    # EXECUTIVE KPI CARDS
-    # ==========================================================
-
-    st.subheader("🚀 Production AI Models")
+    st.subheader("Production Machine Learning Models")
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         metric_card(
-            "📚 Training Records",
+            "Training Samples",
             f"{rf_metrics['training_rows']:,}"
         )
 
     with c2:
         metric_card(
-            "🧪 Testing Records",
+            "Testing Samples",
             f"{rf_metrics['testing_rows']:,}"
         )
 
     with c3:
         metric_card(
-            "🌲 Random Forest AUC",
+            "Random Forest",
             f"{rf_metrics['auc']*100:.2f}%"
         )
 
     with c4:
         metric_card(
-            "⚡ Gradient Boosted AUC",
+            "Gradient Boosted",
             f"{gbt_metrics['auc']*100:.2f}%"
         )
 
     st.divider()
-
-    # ==========================================================
-    # MODEL COMPARISON
-    # ==========================================================
 
     st.subheader("Model Comparison")
 
@@ -141,9 +119,9 @@ health from a single executive dashboard.
 
             coloraxis_showscale=False,
 
-            title="Production Model Performance",
-
-            yaxis_title="ROC-AUC Score"
+            yaxis=dict(
+                range=[0.90, 1.00]
+            )
 
         )
 
@@ -157,7 +135,7 @@ health from a single executive dashboard.
 
     with right:
 
-        st.success("🏆 Best Production Model")
+        st.success("Best Production Model")
 
         st.metric(
 
@@ -177,7 +155,7 @@ health from a single executive dashboard.
 
         st.metric(
 
-            "Training Records",
+            "Training Rows",
 
             f"{rf_metrics['training_rows']:,}"
 
@@ -185,9 +163,9 @@ health from a single executive dashboard.
 
         st.metric(
 
-            "Inference Status",
+            "Pipeline",
 
-            "Production Ready"
+            "Healthy"
 
         )
 
@@ -197,11 +175,7 @@ health from a single executive dashboard.
 
     st.divider()
 
-    # ==========================================================
-    # CHURN RISK ANALYSIS
-    # ==========================================================
-
-    st.subheader("📉 Customer Churn Intelligence")
+    st.subheader("Customer Churn Intelligence")
 
     churn["Risk"] = pd.cut(
 
@@ -291,32 +265,28 @@ health from a single executive dashboard.
         low_risk = len(churn) - high_risk
 
         st.metric(
-            "🔴 High Risk",
+            "High Risk Users",
             f"{high_risk:,}"
         )
 
         st.metric(
-            "🟡 Medium Risk",
+            "Medium Risk Users",
             f"{medium_risk:,}"
         )
 
         st.metric(
-            "🟢 Low Risk",
+            "Low Risk Users",
             f"{low_risk:,}"
         )
 
         st.metric(
-            "📅 Avg Inactive Days",
+            "Average Inactive Days",
             f"{churn['days_inactive'].mean():.1f}"
         )
 
     st.divider()
 
-    # ==========================================================
-    # HIGH RISK USERS
-    # ==========================================================
-
-    st.subheader("🚨 Highest Churn Risk Subscribers")
+    st.subheader("Top 20 Churn Risk Customers")
 
     risk_users = (
 
@@ -362,11 +332,7 @@ health from a single executive dashboard.
 
     st.divider()
 
-    # ==========================================================
-    # RECOMMENDATION ENGINE
-    # ==========================================================
-
-    st.subheader("🎯 Recommendation Engine (ALS Collaborative Filtering)")
+    st.subheader("Recommendation Engine (ALS Collaborative Filtering)")
 
     left, right = st.columns([2, 1])
 
@@ -374,7 +340,7 @@ health from a single executive dashboard.
 
         recommendation_status = pd.DataFrame({
 
-            "Engine": [
+            "Component": [
                 "ALS Collaborative Filtering",
                 "Content-Based Filtering",
                 "Trending Engine",
@@ -388,7 +354,7 @@ health from a single executive dashboard.
                 "Online"
             ],
 
-            "Confidence": [
+            "Health": [
                 "91%",
                 "88%",
                 "86%",
@@ -411,7 +377,7 @@ health from a single executive dashboard.
 
         st.metric(
 
-            "Recommendation Accuracy",
+            "Recommendation Confidence",
 
             "91%"
 
@@ -419,7 +385,7 @@ health from a single executive dashboard.
 
         st.metric(
 
-            "Users Covered",
+            "Profiles Covered",
 
             f"{len(churn):,}"
 
@@ -427,21 +393,17 @@ health from a single executive dashboard.
 
         st.metric(
 
-            "Recommendation Model",
+            "Model",
 
             "ALS Collaborative Filtering"
 
         )
 
-        st.success("🟢 Production Recommendation Engine Active")
+        st.success("Recommendation Engine Online")
 
     st.divider()
 
-    # ==========================================================
-    # AI SUMMARY
-    # ==========================================================
-
-    st.subheader("🧠 Executive AI Summary")
+    st.subheader("AI Summary")
 
     left, right = st.columns(2)
 
@@ -453,7 +415,7 @@ Production Churn Model
 
 **{comparison['Winner']['Best Model']}**
 
-Random Forest currently delivers the highest prediction accuracy and has been selected as the production churn model.
+Current production model achieves the highest ROC-AUC among all evaluated algorithms.
 """
         )
 
@@ -463,21 +425,13 @@ Random Forest currently delivers the highest prediction accuracy and has been se
             f"""
 Recommendation Engine
 
-ALS Collaborative Filtering continuously generates personalized recommendations across the entire subscriber base.
+ALS Collaborative Filtering is serving personalized recommendations across **{len(churn):,}** customer profiles.
 """
         )
 
     st.divider()
 
-    # ==========================================================
-    # ARIMA FORECAST
-    # ==========================================================
-
-    st.subheader("📈 Business Forecasting (ARIMA)")
-
-    st.caption(
-        "Forecast of Daily Active Users and Watch Hours generated using the ARIMA time-series model."
-    )
+    st.subheader("30-Day Business Forecast")
 
     forecast = forecast_df.copy()
 
@@ -504,7 +458,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
         use_container_width=True
     )
 
-    st.subheader("Forecast Watch Hours")
+    st.markdown("##### Forecast Watch Hours")
 
     fig2 = px.line(
         forecast,
@@ -527,7 +481,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
         use_container_width=True
     )
 
-    st.subheader("Forecast Output")
+    st.subheader("Forecast Dataset")
 
     forecast_display = forecast.round(2)
 
@@ -543,11 +497,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
     st.divider()
 
-    # ==========================================================
-    # MODEL DETAILS
-    # ==========================================================
-
-    st.subheader("🧾 Model Configuration")
+    st.subheader("Production Model Details")
 
     left, right = st.columns(2)
 
@@ -575,7 +525,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         })
 
-        st.markdown("### 🌲 Random Forest")
+        st.markdown("### Random Forest")
 
         st.dataframe(
             rf_df,
@@ -607,7 +557,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         })
 
-        st.markdown("### ⚡ Gradient Boosted Trees")
+        st.markdown("### Gradient Boosted Trees")
 
         st.dataframe(
             gbt_df,
@@ -617,11 +567,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
     st.divider()
 
-    # ==========================================================
-    # MODEL HEALTH
-    # ==========================================================
-
-    st.subheader("📊 AI Platform Health")
+    st.subheader("Production Model Health")
 
     health = pd.DataFrame({
 
@@ -634,7 +580,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         ],
 
-        "Health Score": [
+        "Overall Score": [
 
             rf_metrics["auc"] * 100,
 
@@ -654,11 +600,11 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         x="Model",
 
-        y="Health Score",
+        y="Overall Score",
 
-        color="Health Score",
+        color="Overall Score",
 
-        text="Health Score",
+        text="Overall Score",
 
         template="plotly_dark"
 
@@ -693,11 +639,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
     st.divider()
 
-    # ==========================================================
-    # PIPELINE STATUS
-    # ==========================================================
-
-    st.subheader("⚙ AI Pipeline Status")
+    st.subheader("Production AI Pipeline")
 
     pipeline = pd.DataFrame({
 
@@ -714,15 +656,15 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
         ],
 
         "Status": [
+            "Running",
+            "Running",
+            "Running",
             "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy",
-            "Healthy"
+            "Completed",
+            "Completed",
+            "Online",
+            "Online",
+            "Live"
         ]
 
     })
@@ -739,11 +681,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
     st.divider()
 
-    # ==========================================================
-    # EXECUTIVE SUMMARY
-    # ==========================================================
-
-    st.subheader("🧠 Executive AI Summary")
+    st.subheader("Executive AI Summary")
 
     risk_percentage = (high_risk / len(churn)) * 100
 
@@ -757,7 +695,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         with st.container(border=True):
 
-            st.markdown("#### 🏆 Production Model")
+            st.markdown("#### Best Model")
 
             st.metric(
                 "Model",
@@ -778,7 +716,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         with st.container(border=True):
 
-            st.markdown("#### 🚀 AI Platform")
+            st.markdown("#### Platform Intelligence")
 
             st.metric(
                 "Recommendation Engine",
@@ -791,21 +729,17 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
             )
 
             st.metric(
-                "Pipeline Status",
+                "Pipeline",
                 "Healthy"
             )
 
             st.caption(
-                f"Average Watch Time: {avg_watch:.1f} min • Average Completion: {avg_completion:.2f}%"
+                f"Average Watch Time: {avg_watch:.1f} min | Average Completion: {avg_completion:.2f}%"
             )
 
     st.divider()
 
-    # ==========================================================
-    # ALS RECOMMENDATION ENGINE
-    # ==========================================================
-
-    st.subheader("🎬 Personalized Recommendations")
+    st.subheader("AI Content Recommendations")
 
     from utils.ml_loader import load_als_recommendations
 
@@ -817,9 +751,7 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
     else:
 
-        st.caption(
-            "Recommendations generated using Apache Spark MLlib ALS Collaborative Filtering."
-        )
+        st.caption("Personalized content generated using Spark MLlib ALS Collaborative Filtering.")
 
         display = recommended[
         [
@@ -848,12 +780,12 @@ ALS Collaborative Filtering continuously generates personalized recommendations 
 
         best = display.iloc[0]
 
-        st.success(
-        f"⭐ Top Recommendation: **{best['Title']}** ({best['Genre']}) • Predicted Rating: **{best['Predicted Rating']}**"
+        st.info(
+        f"Top Recommendation: **{best['Title']}** ({best['Genre']}) | Predicted Rating: **{best['Predicted Rating']}**"
         )
 
     st.markdown("---")
 
     st.caption(
-        "Powered by Apache Spark • PySpark • Spark MLlib • Random Forest • Gradient Boosted Trees • ALS • ARIMA"
+        "Enterprise OTT Intelligence Platform | Apache Spark | PySpark | MLlib | ALS | ARIMA | Random Forest | Gradient Boosted Trees"
     )

@@ -13,40 +13,23 @@ from views.ml import show as ml
 from views.realtime import show as realtime
 
 
-# -----------------------------------------------------
-# Streamlit Configuration
-# -----------------------------------------------------
-
 st.set_page_config(
     page_title=APP_TITLE,
-    page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# -----------------------------------------------------
-# Global Theme
-# -----------------------------------------------------
-
 apply_theme()
-
-# -----------------------------------------------------
-# Sidebar
-# -----------------------------------------------------
 
 page = sidebar()
 
-# -----------------------------------------------------
-# Routes
-# -----------------------------------------------------
-
 PAGES = {
-    "🏠 Executive Dashboard": executive,
-    "📺 Content Analytics": content,
-    "👥 User Analytics": users,
-    "💰 Revenue Analytics": revenue,
-    "🤖 ML Predictions": ml,
-    "⚡ Real-Time Monitoring": realtime,
+    "Executive Dashboard": executive,
+    "Content Analytics": content,
+    "User Analytics": users,
+    "Revenue Analytics": revenue,
+    "ML Predictions": ml,
+    "Real-Time Monitoring": realtime,
 }
 
 page_function = PAGES.get(page)

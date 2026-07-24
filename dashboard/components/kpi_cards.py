@@ -7,16 +7,6 @@ def metric_card(
     delta=None,
     help_text=None
 ):
-    """
-    Reusable KPI Card
-
-    Parameters
-    ----------
-    title : str
-    value : str/int/float
-    delta : str/int/float
-    help_text : str
-    """
 
     st.metric(
         label=title,

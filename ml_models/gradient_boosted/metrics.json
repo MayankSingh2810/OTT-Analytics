@@ -2,7 +2,7 @@
     "algorithm": "Spark MLlib Gradient Boosted Trees",
     "iterations": 100,
     "max_depth": 6,
-    "auc": 0.9320200815985838,
-    "training_rows": 39674,
-    "testing_rows": 9982
+    "auc": 0.917065763035141,
+    "training_rows": 39675,
+    "testing_rows": 9984
 }

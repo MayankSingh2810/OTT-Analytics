@@ -15,7 +15,7 @@ def show():
 
     dashboard = load_table("dashboard_summary")
 
-    st.title("🎬 OTT Stream Intelligence Platform")
+    st.title("OTT Stream Intelligence Platform")
     st.caption("Enterprise Big Data Analytics Dashboard")
 
     st.info(
@@ -39,47 +39,39 @@ and business intelligence across the OTT ecosystem.
 
     st.divider()
 
-    # ======================================================
-    # KPI CARDS
-    # ======================================================
-
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         st.metric(
-            "🎥 Total Watch Hours",
+            "Total Watch Hours",
             f"{row['watch_hours']:,.0f}"
         )
 
     with c2:
         st.metric(
-            "👥 Registered Subscribers",
+            "Registered Subscribers",
             f"{int(row['registered_users']):,}"
         )
 
     with c3:
         st.metric(
-            "📺 Content Catalog",
+            "Content Catalog",
             f"{int(row['content_library']):,}"
         )
 
     with c4:
         st.metric(
-            "⭐ Average Completion Rate",
+            "Average Completion Rate",
             f"{row['avg_completion']:.2f}%"
         )
 
     st.divider()
 
-    # ======================================================
-    # OVERVIEW + PIPELINE
-    # ======================================================
-
     left, right = st.columns([2.5, 1])
 
     with left:
 
-        st.subheader("📊 Platform Overview")
+        st.subheader("Platform Overview")
 
         overview_df = pd.DataFrame(
             {
@@ -117,19 +109,11 @@ and business intelligence across the OTT ecosystem.
 
     st.divider()
 
-    # ======================================================
-    # AI INSIGHTS
-    # ======================================================
-
     executive_insights(row)
 
     st.divider()
 
-    # ======================================================
-    # PLATFORM PERFORMANCE OVERVIEW
-    # ======================================================
-
-    st.subheader("📈 Platform Performance Overview")
+    st.subheader("Platform Performance Overview")
 
     chart1, chart2 = st.columns(2)
 

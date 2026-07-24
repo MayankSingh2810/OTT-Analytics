@@ -12,7 +12,6 @@ engine = create_engine(
 )
 
 TABLES = {
-    # short aliases
     "dashboard": "dashboard_summary",
     "daily_users": "daily_active_users",
     "monthly_users": "monthly_active_users",
@@ -33,8 +32,6 @@ TABLES = {
     "events": "event_stats",
     "churn": "churn_features",
 
-    # full table names (so pages calling load_table("dashboard_summary")
-    # etc. also resolve correctly, without having to rewrite every page)
     "dashboard_summary": "dashboard_summary",
     "daily_active_users": "daily_active_users",
     "monthly_active_users": "monthly_active_users",

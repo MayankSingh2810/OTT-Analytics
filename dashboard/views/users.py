@@ -7,7 +7,7 @@ from components.charts import bar_chart
 
 def show():
 
-    st.title("👥 User Analytics")
+    st.title("User Analytics")
     st.caption("Enterprise Audience Behavior Dashboard")
 
     st.info(
@@ -29,10 +29,6 @@ customer behaviour across the OTT platform.
         st.warning("User Retention table not found.")
         return
 
-    # -----------------------------------------
-    # Convert numeric columns
-    # -----------------------------------------
-
     numeric_cols = [
         "total_sessions",
         "avg_watch_minutes",
@@ -52,47 +48,47 @@ customer behaviour across the OTT platform.
 
         if not dashboard.empty and "unique_users" in dashboard.columns:
             metric_card(
-                "👥 Registered Subscribers",
+                "Registered Subscribers",
                 f"{int(dashboard['unique_users'].iloc[0]):,}"
             )
         else:
-            metric_card("👥 Registered Subscribers", f"{len(retention):,}")
+            metric_card("Registered Subscribers", f"{len(retention):,}")
 
     with c2:
 
         if "total_sessions" in retention.columns:
             metric_card(
-                "🎬 Average Sessions",
+                "Average Sessions",
                 f"{retention['total_sessions'].mean():.1f}"
             )
         else:
-            metric_card("🎬 Average Sessions", "N/A")
+            metric_card("Average Sessions", "N/A")
 
     with c3:
 
         if "avg_watch_minutes" in retention.columns:
             metric_card(
-                "⏱ Average Watch Time",
+                "Average Watch Time",
                 f"{retention['avg_watch_minutes'].mean():.1f} min"
             )
         else:
-            metric_card("⏱ Average Watch Time", "N/A")
+            metric_card("Average Watch Time", "N/A")
 
     with c4:
 
         if "days_inactive" in retention.columns:
             metric_card(
-                "😴 Average Inactive Days",
+                "Average Inactive Days",
                 f"{retention['days_inactive'].mean():.1f}"
             )
         else:
-            metric_card("😴 Average Inactive Days", "N/A")
+            metric_card("Average Inactive Days", "N/A")
 
     st.divider()
 
     if {"country"}.issubset(retention.columns):
 
-        st.subheader("🌍 Subscriber Distribution")
+        st.subheader("Subscriber Distribution")
 
         country = (
             retention.groupby("country")
@@ -112,7 +108,7 @@ customer behaviour across the OTT platform.
 
     if {"age_group"}.issubset(retention.columns):
 
-        st.subheader("📊 Audience Age Distribution")
+        st.subheader("Audience Age Distribution")
 
         age = (
             retention.groupby("age_group")
@@ -135,7 +131,7 @@ customer behaviour across the OTT platform.
 
     if {"membership_years"}.issubset(retention.columns):
 
-        st.subheader("📅 Membership Tenure")
+        st.subheader("Membership Tenure")
 
         membership = (
             retention.groupby("membership_years")
@@ -168,13 +164,13 @@ customer behaviour across the OTT platform.
 
         with left:
             metric_card(
-                "🟢 Active Subscribers",
+                "Active Subscribers",
                 f"{active:.1f}%"
             )
 
         with right:
             metric_card(
-                "🔴 Inactive Subscribers",
+                "Inactive Subscribers",
                 f"{inactive:.1f}%"
             )
 
@@ -204,7 +200,7 @@ customer behaviour across the OTT platform.
 
     st.divider()
 
-    st.subheader("🧠 Audience Insights")
+    st.subheader("Audience Insights")
 
     c1, c2 = st.columns(2)
 

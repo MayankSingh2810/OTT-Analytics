@@ -1,13 +1,9 @@
 import streamlit as st
 
 
-# ==========================================================
-# Executive AI Insights
-# ==========================================================
-
 def executive_insights(row):
 
-    st.subheader("🧠 Executive Intelligence")
+    st.subheader("Executive Intelligence")
 
     st.success(
         f"""
@@ -51,24 +47,20 @@ indicating strong long-form engagement.
     )
 
 
-# ==========================================================
-# Pipeline Status
-# ==========================================================
-
 def pipeline_status():
 
-    st.subheader("🚀 Platform Health")
+    st.subheader("Platform Health")
 
-    st.success("🟢 Bronze Layer — Operational")
+    st.success("Bronze Layer — Operational")
 
-    st.success("🟢 Silver Layer — Operational")
+    st.success("Silver Layer — Operational")
 
-    st.success("🟢 Gold Layer — Operational")
+    st.success("Gold Layer — Operational")
 
-    st.success("🟢 Feature Store — Operational")
+    st.success("Feature Store — Operational")
 
-    st.success("🟢 Machine Learning Pipeline — Operational")
+    st.success("Machine Learning Pipeline — Operational")
 
-    st.success("🟢 Recommendation Engine — Operational")
+    st.success("Recommendation Engine — Operational")
 
-    st.success("🟢 Forecasting Engine — Operational")
+    st.success("Forecasting Engine — Operational")

@@ -8,53 +8,49 @@ from components.cards import metric_card
 
 def show():
 
-    st.title("⚡ Real-Time Monitoring")
-    st.caption("Live Streaming Platform • Spark Streaming • Operational Intelligence")
+    st.title("Real-Time Monitoring")
 
-    st.info(
-        """
-### Real-Time Operations
-
-Monitor streaming activity, infrastructure health, live user traffic,
-and operational metrics across the OTT platform in real time.
-"""
-    )
+    st.caption("Enterprise Streaming Infrastructure")
 
     watch = load_table("watch_time_summary")
+
     hourly = load_table("hourly_usage")
+
     country = load_table("country_stats")
+
     device = load_table("device_stats")
+
     dashboard = load_table("dashboard_summary")
 
-    if dashboard.empty:
-        st.error("Dashboard Summary not found.")
-        return
-
-    st.subheader("📊 Platform Status")
+    st.subheader("Live Platform Status")
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
+
         metric_card(
-            "📡 Total Events Processed",
+            "Live Events",
             f"{int(dashboard['total_events'].iloc[0]):,}"
         )
 
     with c2:
+
         metric_card(
-            "👥 Active Streaming Users",
-            f"{int(dashboard['unique_users'].iloc[0]):,}"
+            "Streaming Users",
+            f"{dashboard['unique_users'].iloc[0]:,}"
         )
 
     with c3:
+
         metric_card(
-            "⚙ Streaming Engine",
+            "Spark Jobs",
             "Running"
         )
 
     with c4:
+
         metric_card(
-            "🟢 System Health",
+            "Health",
             "99.8%"
         )
 
@@ -64,58 +60,76 @@ and operational metrics across the OTT platform in real time.
 
     with left:
 
-        st.subheader("📈 Streaming Activity by Hour")
+        st.subheader("Hourly Streaming")
 
         fig = px.line(
-            hourly,
-            x="hour",
-            y="events",
-            markers=True,
-            template="plotly_dark"
-        )
 
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7)
+            hourly,
+
+            x="hour",
+
+            y="events",
+
+            markers=True,
+
+            template="plotly_dark"
+
         )
 
         fig.update_layout(
-            paper_bgcolor="#0f172a",
-            plot_bgcolor="#0f172a",
-            height=400,
-            margin=dict(l=20, r=20, t=40, b=20),
-            xaxis_title="Hour",
-            yaxis_title="Events"
+
+            paper_bgcolor="#0d1117",
+
+            plot_bgcolor="#0d1117",
+
+            height=380
+
         )
 
         st.plotly_chart(
+
             fig,
+
             use_container_width=True
+
         )
 
     with right:
 
-        st.subheader("🌍 Regional Traffic Distribution")
+        st.subheader("Current Country Traffic")
 
         fig = px.bar(
+
             country,
+
             x="country",
+
             y="views",
-            color="views",
-            template="plotly_dark"
+
+            template="plotly_dark",
+
+            color="views"
+
         )
 
         fig.update_layout(
-            paper_bgcolor="#0f172a",
-            plot_bgcolor="#0f172a",
+
+            paper_bgcolor="#0d1117",
+
+            plot_bgcolor="#0d1117",
+
             coloraxis_showscale=False,
-            height=400,
-            margin=dict(l=20, r=20, t=40, b=20)
+
+            height=380
+
         )
 
         st.plotly_chart(
+
             fig,
+
             use_container_width=True
+
         )
 
     st.divider()
@@ -124,147 +138,92 @@ and operational metrics across the OTT platform in real time.
 
     with left:
 
-        st.subheader("📱 Device Usage Distribution")
+        st.subheader("Current Device Distribution")
 
         fig = px.pie(
+
             device,
+
             names="device",
+
             values="total_events",
-            hole=0.60,
+
+            hole=.55,
+
             template="plotly_dark"
+
         )
 
         fig.update_layout(
-            paper_bgcolor="#0f172a",
-            plot_bgcolor="#0f172a",
-            height=400,
-            margin=dict(l=20, r=20, t=40, b=20)
+
+            paper_bgcolor="#0d1117",
+
+            height=380
+
         )
 
         st.plotly_chart(
+
             fig,
+
             use_container_width=True
+
         )
 
     with right:
 
-        st.subheader("⚙ Infrastructure Health")
+        st.subheader("Infrastructure")
 
-        infra = pd.DataFrame({
+        st.success("Kafka Streaming")
 
-            "Component": [
-                "Kafka Streaming",
-                "Spark Structured Streaming",
-                "Bronze Layer",
-                "Silver Layer",
-                "Gold Layer",
-                "MySQL Warehouse",
-                "Dashboard"
-            ],
+        st.success("Spark Structured Streaming")
 
-            "Status": [
-                "Operational",
-                "Operational",
-                "Operational",
-                "Operational",
-                "Operational",
-                "Operational",
-                "Operational"
-            ]
+        st.success("Bronze Layer")
 
-        })
+        st.success("Silver Layer")
 
-        st.dataframe(
-            infra,
-            hide_index=True,
-            use_container_width=True,
-            height=320
-        )
+        st.success("Gold Layer")
+
+        st.success("MySQL Warehouse")
+
+        st.success("Streamlit Dashboard")
 
     st.divider()
 
     st.subheader("Live Event Feed")
 
-    st.caption(
-        "Latest streaming events received from the real-time processing pipeline."
-    )
-
     events = pd.DataFrame({
-
-        "Timestamp": pd.date_range(
+        "timestamp": pd.date_range(
             end=pd.Timestamp.now(),
             periods=20,
             freq="min"
         ),
-
-        "User": [
-            f"U{1000+i}" for i in range(20)
+        "user_id": [f"U{1000 + i}" for i in range(20)],
+        "event_type": [
+            "play", "pause", "seek", "play", "stop",
+            "play", "buffer", "play", "pause", "play",
+            "seek", "play", "stop", "play", "buffer",
+            "play", "pause", "play", "seek", "play"
         ],
-
-        "Event": [
-
-            "Play","Pause","Seek","Play","Stop",
-            "Play","Buffer","Play","Pause","Play",
-            "Seek","Play","Stop","Play","Buffer",
-            "Play","Pause","Play","Seek","Play"
-
+        "device": [
+            "Mobile", "Smart TV", "Web", "Mobile", "Tablet",
+            "Smart TV", "Web", "Mobile", "Mobile", "Smart TV",
+            "Web", "Tablet", "Mobile", "Smart TV", "Web",
+            "Mobile", "Tablet", "Smart TV", "Mobile", "Web"
         ],
-
-        "Device":[
-
-            "Mobile","Smart TV","Web","Mobile","Tablet",
-            "Smart TV","Web","Mobile","Mobile","Smart TV",
-            "Web","Tablet","Mobile","Smart TV","Web",
-            "Mobile","Tablet","Smart TV","Mobile","Web"
-
-        ],
-
-        "Country":[
-
-            "India","USA","UK","India","Germany",
-            "USA","Canada","India","UK","USA",
-            "Germany","India","Canada","USA","UK",
-            "India","Germany","USA","Canada","India"
-
+        "country": [
+            "India", "USA", "UK", "India", "Germany",
+            "USA", "Canada", "India", "UK", "USA",
+            "Germany", "India", "Canada", "USA", "UK",
+            "India", "Germany", "USA", "Canada", "India"
         ]
-
     })
 
     st.dataframe(
         events,
-        hide_index=True,
         use_container_width=True,
-        height=320
+        hide_index=True,
+        height=260
     )
 
-    st.divider()
-
-    st.subheader("🧠 Live Insights")
-
-    left, right = st.columns(2)
-
-    with left:
-        st.info(
-            f"""
-Streaming Activity
-
-**{int(dashboard['total_events'].iloc[0]):,} events**
-
-The streaming platform is processing events successfully with healthy throughput.
-"""
-        )
-
-    with right:
-        st.info(
-            """
-Infrastructure
-
-**99.8% Availability**
-
-All streaming services and processing layers are currently operational.
-"""
-        )
-
-    st.caption(
-        "Apache Spark Structured Streaming • Bronze → Silver → Gold Pipeline • MySQL Warehouse • Enterprise Monitoring"
-    )
+    st.success("Enterprise Streaming Platform Operational")

@@ -1,14 +1,14 @@
 {
-    "total_sessions": 0.23410163615239915,
-    "avg_watch_minutes": 0.22965350913200042,
-    "avg_completion": 0.07064607771722244,
-    "days_inactive": 0.22004613505013548,
-    "age": 0.06033274672559381,
-    "membership_years": 0.022516201962520178,
-    "gender_index": 0.003729158021586964,
-    "country_index": 0.03919159519087801,
-    "preferred_genre_index": 0.06796148194708286,
-    "device_type_index": 0.02952356850666827,
-    "profile_type_index": 0.014701590560015155,
-    "age_group_index": 0.007596299033896952
+    "total_sessions": 0.24994353409797018,
+    "avg_watch_minutes": 0.2844612896069924,
+    "avg_completion": 0.05065114059643448,
+    "days_inactive": 0.21260786463129006,
+    "age": 0.0383444446685801,
+    "membership_years": 0.020024322114524113,
+    "gender_index": 0.0033586221620269027,
+    "country_index": 0.033660621385043034,
+    "preferred_genre_index": 0.06311238369384216,
+    "device_type_index": 0.025606941765693815,
+    "profile_type_index": 0.011541815419354201,
+    "age_group_index": 0.006687019858248711
 }

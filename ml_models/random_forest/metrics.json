@@ -2,7 +2,7 @@
     "algorithm": "Spark MLlib Random Forest",
     "trees": 100,
     "max_depth": 8,
-    "auc": 0.9352256602288375,
-    "training_rows": 39674,
-    "testing_rows": 9982
+    "auc": 0.9299189043545667,
+    "training_rows": 39675,
+    "testing_rows": 9984
 }
